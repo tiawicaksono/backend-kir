@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php',
+        commands: __DIR__ . '/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+        // 🔥 WAJIB untuk Sanctum SPA
+        $middleware->statefulApi();
+
+        /**
+         * Supaya kalau user belum login:
+         * return 401 JSON
+         * BUKAN redirect ke route('login').
+         */
+        $middleware->redirectGuestsTo(fn() => null);
+
+        $middleware->alias([
+            'menu.access' => \App\Http\Middleware\CheckMenuAccess::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        //
+    })->create();
