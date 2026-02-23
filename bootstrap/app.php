@@ -23,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn() => null);
 
         $middleware->alias([
-            'menu.access' => \App\Http\Middleware\CheckMenuAccess::class,
+            'check.menu' => \App\Http\Middleware\CheckMenuAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

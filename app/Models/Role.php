@@ -12,17 +12,23 @@ class Role extends Model
         'description',
     ];
 
-    public function roleMenus()
+    public function menus()
     {
-        return $this->hasMany(RoleMenu::class);
+        return $this->belongsToMany(
+            Menu::class,
+            'm_role_menus',
+            'role_id',
+            'menu_id'
+        );
     }
 
-    /**
-     * Many-to-Many: Role -> Users
-     */
     public function users()
     {
-        return $this->belongsToMany(User::class, 'm_role_users')
-            ->withTimestamps();
+        return $this->belongsToMany(
+            User::class,
+            'm_role_users',
+            'role_id',
+            'user_id'
+        )->withPivot('is_active');
     }
 }

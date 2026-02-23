@@ -1,26 +1,102 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\MenuController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MenuController;
+
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->group(function () {
+Route::post('/login-token', [AuthController::class, 'loginToken']);
 
-    // test route
+
+/*
+|--------------------------------------------------------------------------
+| Protected Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:sanctum'])->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auth
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    // logout route
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // menu untuk user yang login
+    /*
+    |--------------------------------------------------------------------------
+    | Menu
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/menus/me', [MenuController::class, 'me']);
 
-    Route::middleware('menu.access')->group(function () {
-        Route::get('/loket/pembayaran', fn() => response()->json(['ok']));
-        Route::get('/master/rolling-alat', fn() => response()->json(['ok']));
+    /*
+    |--------------------------------------------------------------------------
+    | Application Routes (Auto Protected)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware(['check.menu'])->group(function () {
+
+        /*
+        | LOKET
+        */
+        Route::prefix('loket')->group(function () {
+
+            Route::get(
+                '/pembayaran',
+                fn() =>
+                response()->json(['message' => 'Pembayaran OK'])
+            );
+
+            Route::post(
+                '/pembayaran',
+                fn() =>
+                response()->json(['message' => 'Create Pembayaran OK'])
+            );
+        });
+
+        /*
+        | MASTER
+        */
+        Route::prefix('master')->group(function () {
+
+            Route::get(
+                '/rolling-alat',
+                fn() =>
+                response()->json(['message' => 'Rolling Alat OK'])
+            );
+
+            Route::post(
+                '/rolling-alat',
+                fn() =>
+                response()->json(['message' => 'Create Rolling Alat OK'])
+            );
+
+            Route::put(
+                '/rolling-alat/{id}',
+                fn() =>
+                response()->json(['message' => 'Update Rolling Alat OK'])
+            );
+
+            Route::delete(
+                '/rolling-alat/{id}',
+                fn() =>
+                response()->json(['message' => 'Delete Rolling Alat OK'])
+            );
+        });
     });
 });

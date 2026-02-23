@@ -9,39 +9,55 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckMenuAccess
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, $action = null): Response
     {
-        // sementara hardcode dulu
-        // $userId = 3; // nanti ganti auth()->id()
         $user = $request->user();
-
 
         if (!$user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        $userId = $user->id;
+        // Tentukan action berdasarkan HTTP method
+        if (!$action) {
+            $method = $request->method();
+            $action = match ($method) {
+                'GET'    => 'view',
+                'POST'   => 'create',
+                'PUT',
+                'PATCH'  => 'update',
+                'DELETE' => 'delete',
+                default  => 'view',
+            };
+        }
 
+        // Ambil path tanpa prefix 'api'
         $path = '/' . ltrim(str_replace('api/', '', $request->path()), '/');
-        // contoh: /loket/pembayaran
-        $table = (new Menu)->getTable();
-        $allowed = Menu::query()
-            ->join('m_user_menus', "$table.id", '=', 'm_user_menus.menu_id')
-            ->where('m_user_menus.user_id', $userId)
-            ->where(function ($q) use ($path, $table) {
-                $q->where("$table.route", $path)
-                    ->orWhereIn("$table.parent_id", function ($sub) use ($path, $table) {
-                        $sub->select('id')
-                            ->from($table)
-                            ->where('route', $path);
-                    });
-            })
-            ->exists();
 
-        if (! $allowed) {
-            return response()->json([
-                'message' => 'Forbidden'
-            ], 403);
+        // Cari menu berdasarkan route
+        $menu = Menu::where('route', $path)
+            ->where('is_active', true)
+            ->first();
+
+        // Kalau route tidak ada di m_menus → anggap bebas
+        if (!$menu) {
+            return $next($request);
+        }
+
+        // Ambil semua menu efektif user (role + blacklist)
+        $menus = $user->getEffectiveMenus();
+
+        $permission = $menus->get($menu->id);
+
+        // Kalau menu ada di blacklist (m_user_menus) → forbidden
+        if (!$permission) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // Cek action berdasarkan role permission
+        $field = "can_{$action}";
+
+        if (isset($permission->$field) && !$permission->$field) {
+            return response()->json(['message' => 'Forbidden'], 403);
         }
 
         return $next($request);

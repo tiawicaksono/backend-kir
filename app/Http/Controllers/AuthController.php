@@ -2,11 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+
+    public function profile(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'menus' => $user->getEffectiveMenus()
+        ]);
+    }
+
+    public function loginToken(Request $request)
+    {
+        $user = User::where('email', $request->email)->first();
+
+        if ($user && Hash::check($request->password, $user->password)) {
+            $token = $user->createToken('api-token')->plainTextToken;
+            return response()->json(['token' => $token]);
+        }
+
+        return response()->json(['message' => 'Invalid credentials'], 401);
+    }
+
     public function login(Request $request)
     {
         $credentials = $request->only(['email', 'password']);
@@ -22,21 +49,13 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        try {
-            $user = $request->user();
-            if ($user) {
-                Auth::guard('web')->logout(); // Logout user
-                // Hapus token session (kalau pakai token)
-                $request->session()->invalidate(); // Hapus session
-                $request->session()->regenerateToken(); // Regenerate CSRF token
-            }
+        Auth::guard('web')->logout();
 
-            return response()->json(['message' => 'Logged out successfully']);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'Logout failed',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'message' => 'Logged out successfully'
+        ]);
     }
 }

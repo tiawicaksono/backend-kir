@@ -42,9 +42,14 @@ class Menu extends Model
             ->where('locale', $locale);
     }
 
-    public function roleMenus()
+    public function roles()
     {
-        return $this->hasMany(RoleMenu::class);
+        return $this->belongsToMany(
+            Role::class,
+            'm_role_menus',  // pivot table
+            'menu_id',
+            'role_id'
+        );
     }
 
     public function users()

@@ -16,11 +16,11 @@ class MenuController extends Controller
         }
 
         // Ambil semua role id milik user
-        $roleIds = $user->roles()->pluck('roles.id');
+        $roleIds = $user->roles()->pluck('m_roles.id');
 
         // Ambil menu berdasarkan semua role user
         $menus = Menu::whereHas('roles', function ($q) use ($roleIds) {
-            $q->whereIn('roles.id', $roleIds);
+            $q->whereIn('m_roles.id', $roleIds); // id dari m_roles
         })
             ->whereNotIn('id', function ($query) use ($user) {
                 $query->select('menu_id')
