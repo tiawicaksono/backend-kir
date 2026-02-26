@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -19,6 +20,40 @@ class AuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'menus' => $user->getEffectiveMenus()
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $user = $request->user();
+
+        // ✅ VALIDATION
+        $validated = $request->validate([
+            'old_password' => ['required'],
+            'password' => [
+                'required',
+                'confirmed', // harus kirim password_confirmation dari FE
+                Password::min(6)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
+        ]);
+
+        // ✅ CEK OLD PASSWORD
+        if (!Hash::check($validated['old_password'], $user->password)) {
+            return response()->json([
+                'message' => 'Old password is incorrect'
+            ], 422);
+        }
+
+        // ✅ UPDATE PASSWORD
+        $user->update([
+            'password' => Hash::make($validated['password'])
+        ]);
+
+        return response()->json([
+            'message' => 'Password successfully changed'
         ]);
     }
 
