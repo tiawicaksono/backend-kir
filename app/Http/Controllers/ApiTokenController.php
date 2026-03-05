@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ApiKeyResource;
 use App\Models\ApiToken;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,7 +14,8 @@ class ApiTokenController extends Controller
      */
     public function index()
     {
-        return response()->json(ApiToken::all());
+        $apiToken = ApiToken::orderByDesc('id')->get();
+        return response()->json(ApiKeyResource::collection($apiToken));
     }
 
     /**
@@ -31,16 +33,22 @@ class ApiTokenController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'url_api' => 'required|string|max:255',
+            'urlApi' => 'required|string|max:255',
             'token' => 'required|string',
         ]);
 
-        $apiToken = ApiToken::create($validated);
+        $data = [
+            'name'    => $validated['name'],
+            'url_api' => $validated['urlApi'],
+            'token'   => $validated['token'],
+        ];
+
+        $apiToken = ApiToken::create($data);
 
         return response()->json([
             'success' => true,
             'message' => 'API Token created successfully',
-            'data' => $apiToken
+            'data' => new ApiKeyResource($apiToken)
         ]);
     }
 

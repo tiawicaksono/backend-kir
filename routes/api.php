@@ -50,6 +50,7 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
     // Pengaturan
     Route::prefix('pengaturan')->group(function () {
         Route::get('/api-keys', [ApiTokenController::class, 'index']);
+        Route::post('/api-keys/create', [ApiTokenController::class, 'store']);
         Route::put('/api-keys/update-status', [ApiTokenController::class, 'updateStatus']);
         Route::delete('/api-keys/delete/{id}', [ApiTokenController::class, 'destroy']);
         Route::post('/api-integrations', fn() => response()->json(['message' => 'Create Pembayaran OK']));
