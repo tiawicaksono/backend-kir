@@ -83,25 +83,60 @@ class User extends Authenticatable
 
     public function getEffectiveMenus()
     {
-        // Ambil semua role_id aktif user
-        $roleIds = $this->roles()->pluck('m_roles.id')->toArray();
+        $roleIds = $this->roles()->pluck('m_roles.id');
+        $userId = $this->id;
 
-        // Menu dari role
-        $roleMenus = Menu::whereHas('roles', function ($q) use ($roleIds) {
+        // ambil menu yang boleh diakses role
+        $menus = Menu::where('is_active', true)->whereHas('roles', function ($q) use ($roleIds) {
             $q->whereIn('m_roles.id', $roleIds);
         })
-            ->where('is_active', true)
-            ->get()
-            ->keyBy('id');
+            ->whereNotIn('id', function ($query) use ($userId) {
+                $query->select('menu_id')
+                    ->from('m_user_menus')
+                    ->where('user_id', $userId);
+            })
+            ->orderBy('order')
+            ->distinct()
+            ->get();
 
-        // Ambil semua menu yang ada di m_user_menus untuk user ini (blacklist)
-        $forbiddenMenuIds = UserMenu::where('user_id', $this->id)->pluck('menu_id')->toArray();
+        // attach permission from m_role_menus
+        return $this->buildTreeWithPermission($menus, $roleIds);
+    }
 
-        // Hapus menu blacklist dari roleMenus
-        foreach ($forbiddenMenuIds as $menuId) {
-            unset($roleMenus[$menuId]);
+    private function buildTreeWithPermission($menus, $roleIds)
+    {
+        $lookup = [];
+
+        foreach ($menus as $menu) {
+            // ambil permission dari pivot m_role_menus
+            $perm = RoleMenu::where('menu_id', $menu->id)
+                ->whereIn('role_id', $roleIds)
+                ->first();
+
+            $lookup[$menu->id] = (object) [
+                'id'         => $menu->id,
+                'code'       => $menu->code,
+                'parent_id'  => $menu->parent_id,
+                'icon'       => $menu->icon,
+                'route'      => $menu->route,
+                'order'      => $menu->order,
+                'is_active'   => $menu->is_active,
+                'can_view'    => $perm?->can_view ?? false,
+                'can_create'  => $perm?->can_create ?? false,
+                'can_update'  => $perm?->can_update ?? false,
+                'can_delete'  => $perm?->can_delete ?? false,
+                'children'    => [],
+            ];
         }
 
-        return $roleMenus;
+        // build tree
+        foreach ($lookup as $id => $menu) {
+            if ($menu->parent_id !== null && isset($lookup[$menu->parent_id])) {
+                $lookup[$menu->parent_id]->children[] = $menu;
+            }
+        }
+
+        // return root only
+        return array_values(array_filter($lookup, fn($m) => $m->parent_id === null));
     }
 }

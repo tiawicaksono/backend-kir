@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Menu;
 use Closure;
+use App\Models\Menu;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,7 +17,7 @@ class CheckMenuAccess
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        // Tentukan action berdasarkan HTTP method
+        // action from HTTP method
         if (!$action) {
             $method = $request->method();
             $action = match ($method) {
@@ -30,30 +30,57 @@ class CheckMenuAccess
             };
         }
 
-        // Ambil path tanpa prefix 'api'
+        // normalize path (remove api prefix)
         $path = '/' . ltrim(str_replace('api/', '', $request->path()), '/');
 
-        // Cari menu berdasarkan route
+        // find menu by route
         $menu = Menu::where('route', $path)
             ->where('is_active', true)
             ->first();
 
-        // Kalau route tidak ada di m_menus → anggap bebas
+        // try parent route if not found
+        if (!$menu) {
+            $parent = dirname($path);
+            if ($parent !== '/' && $parent !== '.') {
+                $menu = Menu::where('route', $parent)
+                    ->where('is_active', true)
+                    ->first();
+            }
+        }
+
+        logger()->info('menu-debug', [
+            'path' => $path,
+            'menu_route' => $menu?->route
+        ]);
+
+        // route not in menu → free access
         if (!$menu) {
             return $next($request);
         }
 
-        // Ambil semua menu efektif user (role + blacklist)
+        // === BLACKLIST CHECK (m_user_menus) ===
+        $blacklist = $user->menus()
+            ->where('menu_id', $menu->id)
+            ->exists();
+
+        if ($blacklist) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // === PERMISSION TREE (getEffectiveMenus) ===
         $menus = $user->getEffectiveMenus();
 
-        $permission = $menus->get($menu->id);
+        // flatten tree
+        $flat = $this->flattenMenus($menus);
 
-        // Kalau menu ada di blacklist (m_user_menus) → forbidden
+        // find permission for this menu
+        $permission = collect($flat)->firstWhere('id', $menu->id);
+
         if (!$permission) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        // Cek action berdasarkan role permission
+        // === ACTION CHECK ===
         $field = "can_{$action}";
 
         if (isset($permission->$field) && !$permission->$field) {
@@ -61,5 +88,23 @@ class CheckMenuAccess
         }
 
         return $next($request);
+    }
+
+    /**
+     * Flatten tree menu to single array
+     */
+    private function flattenMenus(array $menus): array
+    {
+        $flat = [];
+
+        foreach ($menus as $menu) {
+            $flat[] = $menu;
+
+            if (!empty($menu->children)) {
+                $flat = array_merge($flat, $this->flattenMenus($menu->children));
+            }
+        }
+
+        return $flat;
     }
 }
