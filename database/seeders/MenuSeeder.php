@@ -207,7 +207,7 @@ class MenuSeeder extends Seeder
                 'name' => 'Testing'
             ]
         ]);
-
+        // =====================================================================
         $report = Menu::create([
             'code' => 'laporan',
             'icon' => 'file-text',
@@ -246,6 +246,55 @@ class MenuSeeder extends Seeder
             order: 2,
             id: 'Kendaraan per Kecamatan',
             en: 'Vehicles by District'
+        );
+        // =====================================================================
+        $report = Menu::create([
+            'code' => 'pengaturan',
+            'icon' => 'file-text',
+            'order' => 5,
+        ]);
+
+        $report->translations()->createMany([
+            [
+                'locale' => 'id',
+                'name' => 'Pengaturan'
+            ],
+            [
+                'locale' => 'en',
+                'name' => 'Settings'
+            ]
+        ]);
+
+        /**
+         * Sub Menu Pengaturan
+         */
+        $this->createSubMenu(
+            parent: $report,
+            code: 'pengaturan-user',
+            icon: '',
+            route: '/pengaturan/user',
+            order: 2,
+            id: 'User Management',
+            en: 'User Management'
+        );
+
+        $this->createSubMenu(
+            parent: $report,
+            code: 'api-keys',
+            icon: '',
+            route: '/pengaturan/api-keys',
+            order: 1,
+            id: 'API Keys',
+            en: 'API Keys'
+        );
+        $this->createSubMenu(
+            parent: $report,
+            code: 'api-integrations',
+            icon: '',
+            route: '/pengaturan/api-integrations',
+            order: 1,
+            id: 'Integrasi API',
+            en: 'API Integrations'
         );
         // =====================================================================
 
