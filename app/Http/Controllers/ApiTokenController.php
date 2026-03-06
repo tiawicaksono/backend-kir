@@ -33,14 +33,15 @@ class ApiTokenController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'urlApi' => 'required|string|max:255',
-            'token' => 'required|string',
+            'urlApi' => 'required|url|max:255',
+            'token' => 'required|string|unique:m_api_tokens',
         ]);
 
         $data = [
             'name'    => $validated['name'],
             'url_api' => $validated['urlApi'],
             'token'   => $validated['token'],
+            'is_active' => true
         ];
 
         $apiToken = ApiToken::create($data);
@@ -83,16 +84,22 @@ class ApiTokenController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'url_api' => 'required|string|max:255',
+            'urlApi' => 'required|url|max:255',
             'token' => 'required|string',
         ]);
 
-        $apiToken->update($validated);
+        $data = [
+            'name'    => $validated['name'],
+            'url_api' => $validated['urlApi'],
+            'token'   => $validated['token']
+        ];
+
+        $apiToken->update($data);
 
         return response()->json([
             'success' => true,
             'message' => 'API Token updated successfully',
-            'data' => $apiToken
+            'data' => new ApiKeyResource($apiToken)
         ]);
     }
     public function updateStatus(Request $request)
