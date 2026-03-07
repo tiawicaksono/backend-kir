@@ -3,6 +3,16 @@
 use App\Http\Controllers\ApiTokenController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MasterAreaController;
+use App\Http\Controllers\MasterBahanBakarController;
+use App\Http\Controllers\MasterJenisKendaraanController;
+use App\Http\Controllers\MasterKelasJalanController;
+use App\Http\Controllers\MasterMerkController;
+use App\Http\Controllers\MasterMerkVarianController;
+use App\Http\Controllers\MasterMerkVarianTipeController;
+use App\Http\Controllers\MasterPegawaiController;
+use App\Http\Controllers\MasterStatusPenerbitanController;
+use App\Http\Controllers\MasterSubJenisKendaraanController;
 use App\Http\Controllers\MenuController;
 
 /*
@@ -26,11 +36,24 @@ Route::post('/login-token', [AuthController::class, 'loginToken']);
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
-    Route::post('/logout-token', [AuthController::class, 'logoutToken']);
     // Auth
     Route::get('/user', [AuthController::class, 'profile']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/logout-token', [AuthController::class, 'logoutToken']);
+
+    // Sinkron Kemenhub
+    Route::post('/status-penerbitan/sync', [MasterStatusPenerbitanController::class, 'sync']);
+    Route::post('/kelas-jalan/sync', [MasterKelasJalanController::class, 'sync']);
+    Route::post('/bahan-bakar/sync', [MasterBahanBakarController::class, 'sync']);
+    Route::post('/merk/sync', [MasterMerkController::class, 'sync']);
+    Route::post('/merk-varian/sync', [MasterMerkVarianController::class, 'sync']);
+    Route::post('/merk-varian-tipe/sync', [MasterMerkVarianTipeController::class, 'sync']);
+    Route::post('/jenis-kendaraan/sync', [MasterJenisKendaraanController::class, 'sync']);
+    Route::post('/sub-jenis-kendaraan/sync', [MasterSubJenisKendaraanController::class, 'sync']);
+    Route::post('/pegawai/sync', [MasterPegawaiController::class, 'sync']);
+    Route::post('/area/sync', [MasterAreaController::class, 'sync']);
+
     // Menu
     Route::get('/menus/me', [MenuController::class, 'me']);
     // Loket
