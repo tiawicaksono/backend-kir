@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,        // 4️⃣ users (butuh role)
             UserMenuSeeder::class,    // 5️⃣ user_menu (butuh user + menu)
             RoleUserSeeder::class,    // 6️⃣ role_user (butuh user + role)
+            ApiTokenSeeder::class,
+            ApiIntegrationSeeder::class
         ]);
     }
 }

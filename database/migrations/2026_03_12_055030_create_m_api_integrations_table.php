@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('trn_sinkrons', function (Blueprint $table) {
+        Schema::create('m_api_integrations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('url_api');
-            $table->text('token');
             $table->string('prefix');
-            $table->boolean('status');
-            $table->string('keterangan');
-            $table->timestamp('created_at')->useCurrent();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
         });
     }
 
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('trn_sinkrons');
+        Schema::dropIfExists('m_api_integrations');
     }
 };

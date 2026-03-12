@@ -27,7 +27,7 @@ class MasterMerkController extends Controller
             'token'   => 'required|string'
         ]);
 
-        $name = 'merk';
+        $name = 'Merk';
         $prefix = 'merk';
         $url_api = $validated['url_api'];
         $token = $validated['token'];

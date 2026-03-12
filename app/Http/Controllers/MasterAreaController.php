@@ -27,7 +27,7 @@ class MasterAreaController extends Controller
             'token'   => 'required|string'
         ]);
 
-        $name = 'area';
+        $name = 'Area';
         $prefix = 'area';
         $url_api = $validated['url_api'];
         $token = $validated['token'];
