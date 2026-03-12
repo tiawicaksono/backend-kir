@@ -27,15 +27,18 @@ class MasterMerkVarianTipeController extends Controller
             'token'   => 'required|string'
         ]);
 
+        $name = 'Tipe Varian Merk';
         $prefix = 'varian';
+        $url_api = $validated['url_api'];
+        $token = $validated['token'];
         try {
             $result = $this->kemenhubService->getStatusPenerbitan(
-                $validated['url_api'],
-                $validated['token'],
+                $url_api,
+                $token,
                 $prefix
             );
 
-            DB::transaction(function () use ($result) {
+            DB::transaction(function () use ($result, $prefix, $name, $url_api, $token) {
 
                 // ambil semua parent id yang ada
                 $parentIds = DB::table('master_merk_varians')
@@ -66,7 +69,10 @@ class MasterMerkVarianTipeController extends Controller
 
                 // history sukses
                 TrnSinkron::create([
-                    'name' => 'variantipe',
+                    'name' => $name,
+                    'prefix' => $prefix,
+                    'url_api' => $url_api,
+                    'token' => $token,
                     'status' => true,
                     'keterangan' => 'Sinkronisasi berhasil'
                 ]);
@@ -79,7 +85,10 @@ class MasterMerkVarianTipeController extends Controller
 
             // history gagal
             TrnSinkron::create([
-                'name' => 'variantipe',
+                'name' => $name,
+                'prefix' => $prefix,
+                'url_api' => $url_api,
+                'token' => $token,
                 'status' => false,
                 'keterangan' => $e->getMessage()
             ]);

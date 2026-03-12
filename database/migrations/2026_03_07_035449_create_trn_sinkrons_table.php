@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('trn_sinkrons', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('url_api');
+            $table->text('token');
+            $table->string('prefix');
             $table->boolean('status');
             $table->string('keterangan');
             $table->timestamp('created_at')->useCurrent();

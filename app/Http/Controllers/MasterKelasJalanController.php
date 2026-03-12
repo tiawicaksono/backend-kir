@@ -27,15 +27,18 @@ class MasterKelasJalanController extends Controller
             'token'   => 'required|string'
         ]);
 
+        $name = 'Kelas Jalan';
         $prefix = 'kelasjalan';
+        $url_api = $validated['url_api'];
+        $token = $validated['token'];
         try {
             $result = $this->kemenhubService->getStatusPenerbitan(
-                $validated['url_api'],
-                $validated['token'],
+                $url_api,
+                $token,
                 $prefix
             );
 
-            DB::transaction(function () use ($result, $prefix) {
+            DB::transaction(function () use ($result, $prefix, $name, $url_api, $token) {
 
                 foreach ($result['data'] ?? [] as $item) {
 
@@ -55,7 +58,10 @@ class MasterKelasJalanController extends Controller
 
                 // history sukses
                 TrnSinkron::create([
-                    'name' => $prefix,
+                    'name' => $name,
+                    'prefix' => $prefix,
+                    'url_api' => $url_api,
+                    'token' => $token,
                     'status' => true,
                     'keterangan' => 'Sinkronisasi berhasil'
                 ]);
@@ -68,7 +74,10 @@ class MasterKelasJalanController extends Controller
 
             // history gagal
             TrnSinkron::create([
-                'name' => $prefix,
+                'name' => $name,
+                'prefix' => $prefix,
+                'url_api' => $url_api,
+                'token' => $token,
                 'status' => false,
                 'keterangan' => $e->getMessage()
             ]);
