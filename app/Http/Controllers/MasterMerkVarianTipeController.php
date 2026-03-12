@@ -93,16 +93,21 @@ class MasterMerkVarianTipeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return MasterMerkVarianTipe::all();
+        $validated = $request->validate([
+            'vehicle_varian_type_id' => 'required|integer'
+        ]);
+
+        return MasterMerkVarianTipe::where('vehicle_varian_type_id', $validated['vehicle_varian_type_id'])->get();
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(MasterMerkVarianTipe $masterMerkVarianTipe)
+    public function show($masterMerkVarianTipe)
     {
-        return response()->json($masterMerkVarianTipe);
+        return MasterMerkVarianTipe::with('varian.merk')
+            ->findOrFail($masterMerkVarianTipe);
     }
 }

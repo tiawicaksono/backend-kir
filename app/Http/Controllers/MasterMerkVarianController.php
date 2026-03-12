@@ -94,16 +94,21 @@ class MasterMerkVarianController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return MasterMerkVarian::all();
+        $validated = $request->validate([
+            'vehicle_brand_id' => 'required|integer'
+        ]);
+
+        return MasterMerkVarian::where('vehicle_brand_id', $validated['vehicle_brand_id'])->get();
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(MasterMerkVarian $masterMerkVarian)
+    public function show($masterMerkVarian)
     {
-        return response()->json($masterMerkVarian);
+        return MasterMerkVarian::with('merk', 'variantipes')
+            ->findOrFail($masterMerkVarian);
     }
 }

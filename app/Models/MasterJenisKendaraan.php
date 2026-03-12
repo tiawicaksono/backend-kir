@@ -17,7 +17,7 @@ class MasterJenisKendaraan extends Model
         'vehicle_type_desc',
     ];
 
-    public function masterSubJenisKendaraan()
+    public function masterSubJenisKendaraans()
     {
         return $this->hasMany(MasterSubJenisKendaraan::class, 'vehicle_type_id', 'vehicle_type_id');
     }

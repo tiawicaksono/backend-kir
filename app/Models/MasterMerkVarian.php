@@ -23,7 +23,7 @@ class MasterMerkVarian extends Model
         return $this->belongsTo(MasterMerk::class, 'vehicle_brand_id', 'vehicle_brand_id');
     }
 
-    public function tipe()
+    public function variantipes()
     {
         return $this->hasMany(MasterMerkVarianTipe::class, 'vehicle_varian_type_id', 'vehicle_varian_type_id');
     }

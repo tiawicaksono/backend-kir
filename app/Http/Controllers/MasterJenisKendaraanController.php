@@ -87,8 +87,9 @@ class MasterJenisKendaraanController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(MasterJenisKendaraan $masterJenisKendaraan)
+    public function show($masterJenisKendaraan)
     {
-        return response()->json($masterJenisKendaraan);
+        return MasterJenisKendaraan::with('masterSubJenisKendaraans')
+            ->findOrFail($masterJenisKendaraan);
     }
 }

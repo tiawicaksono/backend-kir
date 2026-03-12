@@ -17,7 +17,7 @@ class MasterMerk extends Model
         'vehicle_brand_desc',
     ];
 
-    public function varian()
+    public function varians()
     {
         return $this->hasMany(MasterMerkVarian::class, 'vehicle_brand_id', 'vehicle_brand_id');
     }

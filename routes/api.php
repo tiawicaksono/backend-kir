@@ -46,11 +46,37 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
     Route::post('/status-penerbitan/sync', [MasterStatusPenerbitanController::class, 'sync']);
     Route::post('/kelas-jalan/sync', [MasterKelasJalanController::class, 'sync']);
     Route::post('/bahan-bakar/sync', [MasterBahanBakarController::class, 'sync']);
-    Route::post('/merk/sync', [MasterMerkController::class, 'sync']);
-    Route::post('/merk-varian/sync', [MasterMerkVarianController::class, 'sync']);
-    Route::post('/merk-varian-tipe/sync', [MasterMerkVarianTipeController::class, 'sync']);
-    Route::post('/jenis-kendaraan/sync', [MasterJenisKendaraanController::class, 'sync']);
-    Route::post('/sub-jenis-kendaraan/sync', [MasterSubJenisKendaraanController::class, 'sync']);
+
+    Route::prefix('merk')->group(function () {
+        Route::post('/', [MasterMerkController::class, 'index']);
+        Route::get('/{masterMerk}', [MasterMerkController::class, 'show']);
+        Route::post('/sync', [MasterMerkController::class, 'sync']);
+    });
+
+    Route::prefix('merk-varian')->group(function () {
+        Route::post('/', [MasterMerkVarianController::class, 'index']);
+        Route::get('/{masterMerkVarian}', [MasterMerkVarianController::class, 'show']);
+        Route::post('/sync', [MasterMerkVarianController::class, 'sync']);
+    });
+
+    Route::prefix('merk-varian-tipe')->group(function () {
+        Route::post('/', [MasterMerkVarianTipeController::class, 'index']);
+        Route::get('/{masterMerkVarianTipe}', [MasterMerkVarianTipeController::class, 'show']);
+        Route::post('/sync', [MasterMerkVarianTipeController::class, 'sync']);
+    });
+
+    Route::prefix('jenis-kendaraan')->group(function () {
+        Route::post('/', [MasterJenisKendaraanController::class, 'index']);
+        Route::get('/{masterJenisKendaraan}', [MasterJenisKendaraanController::class, 'show']);
+        Route::post('/sync', [MasterJenisKendaraanController::class, 'sync']);
+    });
+
+    Route::prefix('sub-jenis-kendaraan')->group(function () {
+        Route::post('/', [MasterSubJenisKendaraanController::class, 'index']);
+        Route::get('/{masterMerkVarian}', [MasterSubJenisKendaraanController::class, 'show']);
+        Route::post('/sync', [MasterSubJenisKendaraanController::class, 'sync']);
+    });
+
     Route::post('/pegawai/sync', [MasterPegawaiController::class, 'sync']);
     Route::post('/area/sync', [MasterAreaController::class, 'sync']);
 

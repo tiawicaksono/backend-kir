@@ -87,8 +87,9 @@ class MasterMerkController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(MasterMerk $masterMerk)
+    public function show($masterMerk)
     {
-        return response()->json($masterMerk);
+        return MasterMerk::with('varians.variantipes')
+            ->findOrFail($masterMerk);
     }
 }
