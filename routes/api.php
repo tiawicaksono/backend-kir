@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiIntegrationController;
 use App\Http\Controllers\ApiTokenController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\MasterPegawaiController;
 use App\Http\Controllers\MasterStatusPenerbitanController;
 use App\Http\Controllers\MasterSubJenisKendaraanController;
 use App\Http\Controllers\MenuController;
+use App\Models\ApiIntegration;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,38 +44,58 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-token', [AuthController::class, 'logoutToken']);
 
-    // Sinkron Kemenhub
-    Route::post('/status-penerbitan/sync', [MasterStatusPenerbitanController::class, 'sync']);
-    Route::post('/kelas-jalan/sync', [MasterKelasJalanController::class, 'sync']);
-    Route::post('/bahan-bakar/sync', [MasterBahanBakarController::class, 'sync']);
-
+    /**
+     * ===============================
+     * Sinkron Kemenhub
+     * ===============================
+     */
+    // Status Penerbitan
+    Route::prefix('statuspenerbitan')->group(function () {
+        Route::get('/', [MasterStatusPenerbitanController::class, 'index']);
+        Route::post('/sync', [MasterStatusPenerbitanController::class, 'sync']);
+    });
+    // Kelas Jalan
+    Route::prefix('kelasjalan')->group(function () {
+        Route::get('/', [MasterKelasJalanController::class, 'index']);
+        Route::post('/sync', [MasterKelasJalanController::class, 'sync']);
+    });
+    // Bahan Bakar
+    Route::prefix('fuel')->group(function () {
+        Route::get('/', [MasterBahanBakarController::class, 'index']);
+        Route::post('/sync', [MasterBahanBakarController::class, 'sync']);
+    });
+    // Merk
     Route::prefix('merk')->group(function () {
         Route::post('/', [MasterMerkController::class, 'index']);
         Route::get('/{masterMerk}', [MasterMerkController::class, 'show']);
         Route::post('/sync', [MasterMerkController::class, 'sync']);
     });
 
-    Route::prefix('merk-varian')->group(function () {
+    // Varian Merk
+    Route::prefix('variantype')->group(function () {
         Route::post('/', [MasterMerkVarianController::class, 'index']);
         Route::get('/{masterMerkVarian}', [MasterMerkVarianController::class, 'show']);
         Route::post('/sync', [MasterMerkVarianController::class, 'sync']);
     });
 
-    Route::prefix('merk-varian-tipe')->group(function () {
+    // Tipe Varian Merk
+    Route::prefix('varian')->group(function () {
         Route::post('/', [MasterMerkVarianTipeController::class, 'index']);
         Route::get('/{masterMerkVarianTipe}', [MasterMerkVarianTipeController::class, 'show']);
         Route::post('/sync', [MasterMerkVarianTipeController::class, 'sync']);
     });
 
-    Route::prefix('jenis-kendaraan')->group(function () {
+    // Jenis Kendaraan
+    Route::prefix('vehicletype')->group(function () {
         Route::post('/', [MasterJenisKendaraanController::class, 'index']);
         Route::get('/{masterJenisKendaraan}', [MasterJenisKendaraanController::class, 'show']);
         Route::post('/sync', [MasterJenisKendaraanController::class, 'sync']);
     });
 
-    Route::prefix('sub-jenis-kendaraan')->group(function () {
+    // Sub Jenis Kendaraan
+    Route::prefix('subvehicletype')->group(function () {
         Route::post('/', [MasterSubJenisKendaraanController::class, 'index']);
-        Route::get('/{masterMerkVarian}', [MasterSubJenisKendaraanController::class, 'show']);
+        Route::get('/{masterSubJenisKendaraan}', [MasterSubJenisKendaraanController::class, 'show']);
         Route::post('/sync', [MasterSubJenisKendaraanController::class, 'sync']);
     });
 
@@ -98,11 +120,15 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
 
     // Pengaturan
     Route::prefix('pengaturan')->group(function () {
+        // API KEYS
         Route::get('/api-keys', [ApiTokenController::class, 'index']);
         Route::post('/api-keys/create', [ApiTokenController::class, 'store']);
         Route::put('/api-keys/update/{id}', [ApiTokenController::class, 'update']);
         Route::put('/api-keys/update-status', [ApiTokenController::class, 'updateStatus']);
         Route::delete('/api-keys/delete/{id}', [ApiTokenController::class, 'destroy']);
-        Route::post('/api-integrations', fn() => response()->json(['message' => 'Create Pembayaran OK']));
+
+        // API INTEGRATIONS
+        Route::get('/api-integrations', [ApiIntegrationController::class, 'index']);
+        Route::get('/api-integrations/detail/{prefix}', [ApiIntegrationController::class, 'show']);
     });
 });

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\StatusPenerbitanResource;
+use App\Http\Resources\TrnSinkronResource;
 use App\Models\MasterStatusPenerbitan;
 use App\Models\TrnSinkron;
 use App\Services\KemenhubService;
@@ -23,14 +25,19 @@ class MasterStatusPenerbitanController extends Controller
     public function sync(Request $request)
     {
         $validated = $request->validate([
+            'api_integration_id' => 'required|integer',
+            'name' => 'required|string|max:255',
+            'prefix' => 'required|string|max:255',
             'url_api' => 'required|url',
             'token'   => 'required|string'
         ]);
 
-        $name = 'Status Penerbitan';
-        $prefix = 'statuspenerbitan';
+        $api_integration_id = $validated['api_integration_id'];
+        $name = $validated['name'];
+        $prefix = $validated['prefix'];
         $url_api = $validated['url_api'];
         $token = $validated['token'];
+        $transaction = null;
         try {
             $result = $this->kemenhubService->getStatusPenerbitan(
                 $url_api,
@@ -38,10 +45,10 @@ class MasterStatusPenerbitanController extends Controller
                 $prefix
             );
 
-            DB::transaction(function () use ($result, $prefix, $name, $url_api, $token) {
+            DB::transaction(function () use ($result, $api_integration_id, $prefix, $name, $url_api, $token, &$transaction) {
 
                 foreach ($result['data'] ?? [] as $item) {
-
+                    // throw new \Exception("Test error");
                     MasterStatusPenerbitan::updateOrCreate(
                         ['issuance_id' => $item['issuance_id']],
                         [
@@ -53,23 +60,26 @@ class MasterStatusPenerbitanController extends Controller
                 }
 
                 // history sukses
-                TrnSinkron::create([
+                $transaction = TrnSinkron::create([
+                    'api_integration_id' => $api_integration_id,
                     'name' => $name,
                     'prefix' => $prefix,
                     'url_api' => $url_api,
                     'token' => $token,
                     'status' => true,
-                    'keterangan' => 'Sinkronisasi berhasil'
+                    'keterangan' => 'Sinkronisasi berhasil',
                 ]);
             });
 
             return response()->json([
-                'message' => 'Sinkronisasi berhasil'
+                'message' => 'Sinkronisasi berhasil',
+                'transaction' => new TrnSinkronResource($transaction)
             ]);
         } catch (\Exception $e) {
 
             // history gagal
-            TrnSinkron::create([
+            $transaction = TrnSinkron::create([
+                'api_integration_id' => $api_integration_id,
                 'name' => $name,
                 'prefix' => $prefix,
                 'url_api' => $url_api,
@@ -79,8 +89,8 @@ class MasterStatusPenerbitanController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Sinkronisasi gagal',
-                'error'   => $e->getMessage()
+                'message' => $e->getMessage(),
+                'transaction' => new TrnSinkronResource($transaction)
             ], 500);
         }
     }
@@ -90,7 +100,8 @@ class MasterStatusPenerbitanController extends Controller
      */
     public function index()
     {
-        return MasterStatusPenerbitan::all();
+        $data = MasterStatusPenerbitan::all();
+        return response()->json(StatusPenerbitanResource::collection($data));
     }
 
     /**

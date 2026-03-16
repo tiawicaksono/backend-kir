@@ -14,8 +14,8 @@ class ApiTokenController extends Controller
      */
     public function index()
     {
-        $apiToken = ApiToken::orderByDesc('id')->get();
-        return response()->json(ApiKeyResource::collection($apiToken));
+        $data = ApiToken::orderByDesc('id')->get();
+        return response()->json(ApiKeyResource::collection($data));
     }
 
     /**

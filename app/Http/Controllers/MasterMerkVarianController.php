@@ -23,12 +23,16 @@ class MasterMerkVarianController extends Controller
     public function sync(Request $request)
     {
         $validated = $request->validate([
+            'api_integration_id' => 'required|integer',
+            'name' => 'required|string|max:255',
+            'prefix' => 'required|string|max:255',
             'url_api' => 'required|url',
             'token'   => 'required|string'
         ]);
 
-        $name = 'Varian Merk';
-        $prefix = 'variantype';
+        $api_integration_id = $validated['api_integration_id'];
+        $name = $validated['name'];
+        $prefix = $validated['prefix'];
         $url_api = $validated['url_api'];
         $token = $validated['token'];
         try {
@@ -38,7 +42,7 @@ class MasterMerkVarianController extends Controller
                 $prefix
             );
 
-            DB::transaction(function () use ($result, $prefix, $name, $url_api, $token) {
+            DB::transaction(function () use ($result, $api_integration_id, $prefix, $name, $url_api, $token) {
 
                 // ambil semua parent id yang ada
                 $parentIds = DB::table('master_merks')
@@ -69,6 +73,7 @@ class MasterMerkVarianController extends Controller
 
                 // history sukses
                 TrnSinkron::create([
+                    'api_integration_id' => $api_integration_id,
                     'name' => $name,
                     'prefix' => $prefix,
                     'url_api' => $url_api,
@@ -85,6 +90,7 @@ class MasterMerkVarianController extends Controller
 
             // history gagal
             TrnSinkron::create([
+                'api_integration_id' => $api_integration_id,
                 'name' => $name,
                 'prefix' => $prefix,
                 'url_api' => $url_api,

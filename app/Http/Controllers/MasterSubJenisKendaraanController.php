@@ -23,12 +23,16 @@ class MasterSubJenisKendaraanController extends Controller
     public function sync(Request $request)
     {
         $validated = $request->validate([
+            'api_integration_id' => 'required|integer',
+            'name' => 'required|string|max:255',
+            'prefix' => 'required|string|max:255',
             'url_api' => 'required|url',
             'token'   => 'required|string'
         ]);
 
-        $name = 'Sub Jenis Kendaraan';
-        $prefix = 'subvehicletype';
+        $api_integration_id = $validated['api_integration_id'];
+        $name = $validated['name'];
+        $prefix = $validated['prefix'];
         $url_api = $validated['url_api'];
         $token = $validated['token'];
         try {
@@ -38,7 +42,7 @@ class MasterSubJenisKendaraanController extends Controller
                 $prefix
             );
 
-            DB::transaction(function () use ($result, $prefix, $name, $url_api, $token) {
+            DB::transaction(function () use ($result, $api_integration_id, $prefix, $name, $url_api, $token) {
 
                 // ambil semua parent id yang ada
                 $parentIds = DB::table('master_jenis_kendaraans')
@@ -69,6 +73,7 @@ class MasterSubJenisKendaraanController extends Controller
 
                 // history sukses
                 TrnSinkron::create([
+                    'api_integration_id' => $api_integration_id,
                     'name' => $name,
                     'prefix' => $prefix,
                     'url_api' => $url_api,
@@ -85,6 +90,7 @@ class MasterSubJenisKendaraanController extends Controller
 
             // history gagal
             TrnSinkron::create([
+                'api_integration_id' => $api_integration_id,
                 'name' => $name,
                 'prefix' => $prefix,
                 'url_api' => $url_api,
@@ -103,16 +109,21 @@ class MasterSubJenisKendaraanController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return MasterSubJenisKendaraan::all();
+        $validated = $request->validate([
+            'vehicle_type_id' => 'required|integer'
+        ]);
+
+        return MasterSubJenisKendaraan::where('vehicle_type_id', $validated['vehicle_type_id'])->get();
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(MasterSubJenisKendaraan $masterSubJenisKendaraan)
+    public function show($masterSubJenisKendaraan)
     {
-        return response()->json($masterSubJenisKendaraan);
+        return MasterSubJenisKendaraan::with('masterJenisKendaraan')
+            ->findOrFail($masterSubJenisKendaraan);
     }
 }

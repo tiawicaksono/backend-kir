@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\KelasJalanResource;
 use App\Models\MasterKelasJalan;
 use App\Models\TrnSinkron;
 use App\Services\KemenhubService;
@@ -23,12 +24,16 @@ class MasterKelasJalanController extends Controller
     public function sync(Request $request)
     {
         $validated = $request->validate([
+            'api_integration_id' => 'required|integer',
+            'name' => 'required|string|max:255',
+            'prefix' => 'required|string|max:255',
             'url_api' => 'required|url',
             'token'   => 'required|string'
         ]);
 
-        $name = 'Kelas Jalan';
-        $prefix = 'kelasjalan';
+        $api_integration_id = $validated['api_integration_id'];
+        $name = $validated['name'];
+        $prefix = $validated['prefix'];
         $url_api = $validated['url_api'];
         $token = $validated['token'];
         try {
@@ -38,7 +43,7 @@ class MasterKelasJalanController extends Controller
                 $prefix
             );
 
-            DB::transaction(function () use ($result, $prefix, $name, $url_api, $token) {
+            DB::transaction(function () use ($result, $api_integration_id, $prefix, $name, $url_api, $token) {
 
                 foreach ($result['data'] ?? [] as $item) {
 
@@ -58,6 +63,7 @@ class MasterKelasJalanController extends Controller
 
                 // history sukses
                 TrnSinkron::create([
+                    'api_integration_id' => $api_integration_id,
                     'name' => $name,
                     'prefix' => $prefix,
                     'url_api' => $url_api,
@@ -74,6 +80,7 @@ class MasterKelasJalanController extends Controller
 
             // history gagal
             TrnSinkron::create([
+                'api_integration_id' => $api_integration_id,
                 'name' => $name,
                 'prefix' => $prefix,
                 'url_api' => $url_api,
@@ -94,7 +101,8 @@ class MasterKelasJalanController extends Controller
      */
     public function index()
     {
-        return MasterKelasJalan::all();
+        $data = MasterKelasJalan::all();
+        return response()->json(KelasJalanResource::collection($data));
     }
 
     /**
