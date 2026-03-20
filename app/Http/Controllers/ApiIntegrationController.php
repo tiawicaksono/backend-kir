@@ -10,6 +10,7 @@ use App\Models\MasterBahanBakar;
 use App\Models\MasterKelasJalan;
 use App\Models\MasterMerk;
 use App\Models\MasterStatusPenerbitan;
+use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
 
 class ApiIntegrationController extends Controller
@@ -53,62 +54,68 @@ class ApiIntegrationController extends Controller
         ];
 
         if (!isset($modelMap[$prefix])) {
-            return response()->json([
-                'message' => 'Invalid prefix'
-            ], 404);
+            return response()->json(['message' => 'Invalid prefix'], 404);
         }
 
         $model = $modelMap[$prefix];
 
         $query = $model::query();
 
-        // SEARCH
-        if ($request->search) {
+        // 🔥 APPLY FILTER ENGINE
+        QueryFilterService::apply($query, $request, $model);
 
-            $columns = array_diff(
-                Schema::getColumnListing((new $model)->getTable()),
-                ['created_at', 'updated_at']
-            );
+        $perPage = $request->limit ?? 10;
+        $result = $query->paginate($perPage);
 
-            $query->where(function ($q) use ($columns, $request) {
-                $keyword = strtolower($request->search);
-                foreach ($columns as $col) {
-                    $q->orWhereRaw("LOWER(CAST($col AS TEXT)) LIKE ?", ["%{$keyword}%"]);
-                }
-            });
-        }
-
-        // SORT
-        if ($request->sort) {
-            $query->orderBy($request->sort, $request->order ?? 'asc');
-        }
-
-        $perPage = $request->per_page ?? 10;
-
-        return $query->paginate($perPage);
+        return response()->json([
+            'data' => $result->items(),
+            'meta' => [
+                'current_page' => $result->currentPage(),
+                'per_page' => $result->perPage(),
+                'total' => $result->total(),
+            ],
+            'config' => $this->getTableConfig($prefix),
+        ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * return primary key and foreign keys
      */
-    public function edit(ApiIntegration $apiIntegration)
+    private function getTableConfig($prefix)
     {
-        //
-    }
+        return [
+            'merk' => [
+                'primary_key' => 'vehicle_brand_id',
+                'foreign_keys' => [],
+                'labels' => [
+                    'vehicle_brand_name' => 'Nama Merk',
+                ],
+                'hidden' => ['created_at', 'updated_at'],
+            ],
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, ApiIntegration $apiIntegration)
-    {
-        //
-    }
+            'varian' => [
+                'primary_key' => 'vehicle_varian_id',
+                'foreign_keys' => ['vehicle_varian_type_id'],
+                'labels' => [
+                    'vehicle_varian_name' => 'Nama Varian',
+                ],
+                'hidden' => ['created_at', 'updated_at'],
+            ],
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(ApiIntegration $apiIntegration)
-    {
-        //
+            'statuspenerbitan' => [
+                'primary_key' => 'issuance_id',
+                'foreign_keys' => [],
+                'labels' => [
+                    'issuance_name' => 'Nama Status',
+                ],
+                'hidden' => ['created_at', 'updated_at'],
+            ],
+
+        ][$prefix] ?? [
+            'primary_key' => 'id',
+            'foreign_keys' => [],
+            'labels' => [],
+            'hidden' => ['created_at', 'updated_at'],
+        ];
     }
 }
