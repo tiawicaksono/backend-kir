@@ -3,51 +3,135 @@
 namespace App\Services;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class QueryFilterService
 {
-    public static function apply(Builder $query, $request, $model)
+    public static function apply(Builder $query, $request, $model, $config = [])
     {
         $table = (new $model)->getTable();
-        $validColumns = Schema::getColumnListing($table);
-        Log::info([
-            'search_by' => $request->search_by,
-            'validColumns' => $validColumns
-        ]);
-        // 🔍 SEARCH
-        if ($request->search) {
-            $searchBy = $request->search_by;
 
-            $keyword = strtolower($request->search);
+        // 🔥 ambil kolom valid
+        $validColumns = cache()->remember("columns_$table", 3600, function () use ($table) {
+            return Schema::getColumnListing($table);
+        });
 
-            $query->where(function ($q) use ($validColumns, $searchBy, $keyword) {
+        /**
+         * =========================================================
+         * 🔍 SEARCH
+         * =========================================================
+         */
+        if ($request->filled('search')) {
+            $keyword = strtolower(trim($request->search));
 
-                if ($searchBy && in_array($searchBy, $validColumns)) {
-                    $q->whereRaw(
-                        "LOWER(CAST($searchBy AS TEXT)) LIKE ?",
+            // 🔥 SEARCH BY
+            if ($request->filled('search_by')) {
+                $col = $request->search_by;
+
+                // kolom utama
+                if (in_array($col, $validColumns)) {
+                    $query->whereRaw(
+                        "LOWER(CAST($col AS TEXT)) LIKE ?",
                         ["%{$keyword}%"]
                     );
-                } else {
+                }
+
+                // relasi
+                if (!empty($config['relations'])) {
+                    foreach ($config['relations'] as $relation => $relConfig) {
+                        if (in_array($col, $relConfig['columns'])) {
+                            $query->orWhereHas($relation, function ($q) use ($col, $keyword) {
+                                $q->whereRaw(
+                                    "LOWER(CAST($col AS TEXT)) LIKE ?",
+                                    ["%{$keyword}%"]
+                                );
+                            });
+                        }
+                    }
+                }
+            }
+
+            // 🔥 GLOBAL SEARCH (FIX TOTAL)
+            else {
+                $query->where(function ($q) use ($validColumns, $keyword, $config) {
+
+                    $conditions = [];
+                    $bindings = [];
+
+                    // 🔹 kolom utama
                     foreach ($validColumns as $col) {
                         if (in_array($col, ['created_at', 'updated_at'])) continue;
 
-                        $q->orWhereRaw(
-                            "LOWER(CAST($col AS TEXT)) LIKE ?",
-                            ["%{$keyword}%"]
-                        );
+                        $conditions[] = "LOWER(CAST($col AS TEXT)) LIKE ?";
+                        $bindings[] = "%{$keyword}%";
                     }
-                }
-            });
+
+                    if (!empty($conditions)) {
+                        $q->whereRaw("(" . implode(" OR ", $conditions) . ")", $bindings);
+                    }
+
+                    // 🔹 relasi
+                    if (!empty($config['relations'])) {
+                        foreach ($config['relations'] as $relation => $relConfig) {
+                            $q->orWhereHas($relation, function ($relQ) use ($keyword, $relConfig) {
+
+                                $relConditions = [];
+                                $relBindings = [];
+
+                                foreach ($relConfig['columns'] as $col) {
+                                    $relConditions[] = "LOWER(CAST($col AS TEXT)) LIKE ?";
+                                    $relBindings[] = "%{$keyword}%";
+                                }
+
+                                if (!empty($relConditions)) {
+                                    $relQ->whereRaw("(" . implode(" OR ", $relConditions) . ")", $relBindings);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
         }
 
-        // 🔥 SORT
-        if ($request->sort_by && in_array($request->sort_by, $validColumns)) {
-            $query->orderBy(
-                $request->sort_by,
-                $request->sort_order ?? 'asc'
-            );
+        /**
+         * =========================================================
+         * 🔥 FILTER BIASA
+         * =========================================================
+         */
+        foreach ($request->all() as $key => $value) {
+
+            if (in_array($key, [
+                'page',
+                'limit',
+                'sort_by',
+                'sort_order',
+                'search',
+                'search_by',
+                'sorter',
+                'or_filters'
+            ])) continue;
+
+            if (!in_array($key, $validColumns)) continue;
+
+            if (is_array($value)) {
+                $query->whereIn($key, $value);
+            } else {
+                $query->where($key, $value);
+            }
+        }
+
+        /**
+         * =========================================================
+         * 🔥 SORT
+         * =========================================================
+         */
+        if ($request->filled('sort_by')) {
+            if (in_array($request->sort_by, $validColumns)) {
+                $query->orderBy(
+                    $request->sort_by,
+                    $request->sort_order ?? 'asc'
+                );
+            }
         }
 
         return $query;

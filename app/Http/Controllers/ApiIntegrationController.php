@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FlattenHelper;
 use Illuminate\Support\Facades\Schema;
 use App\Http\Resources\ApiIntegrationResource;
 use App\Models\ApiIntegration;
 use App\Models\MasterArea;
 use App\Models\MasterBahanBakar;
+use App\Models\MasterJenisKendaraan;
 use App\Models\MasterKelasJalan;
 use App\Models\MasterMerk;
+use App\Models\MasterMerkVarian;
+use App\Models\MasterMerkVarianTipe;
+use App\Models\MasterPegawai;
 use App\Models\MasterStatusPenerbitan;
+use App\Models\MasterSubJenisKendaraan;
 use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
 
@@ -25,22 +31,6 @@ class ApiIntegrationController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Display the specified resource.
      */
     public function show(Request $request, $prefix)
@@ -50,7 +40,12 @@ class ApiIntegrationController extends Controller
             'kelasjalan' => MasterKelasJalan::class,
             'area' => MasterArea::class,
             'fuel' => MasterBahanBakar::class,
+            'pegawai' => MasterPegawai::class,
             'merk' => MasterMerk::class,
+            'variantype' => MasterMerkVarian::class,
+            'varian' => MasterMerkVarianTipe::class,
+            'vehicletype' => MasterJenisKendaraan::class,
+            'subvehicletype' => MasterSubJenisKendaraan::class,
         ];
 
         if (!isset($modelMap[$prefix])) {
@@ -59,22 +54,27 @@ class ApiIntegrationController extends Controller
 
         $model = $modelMap[$prefix];
 
-        $query = $model::query();
+        $config = $this->getTableConfig($prefix);
 
-        // 🔥 APPLY FILTER ENGINE
-        QueryFilterService::apply($query, $request, $model);
+        // 🔥 WITH RELATIONS
+        $query = $model::with(array_keys($config['relations'] ?? []));
+
+        QueryFilterService::apply($query, $request, $model, $config);
 
         $perPage = $request->limit ?? 10;
         $result = $query->paginate($perPage);
 
+        // 🔥 FLATTEN DATA
+        $data = FlattenHelper::flatten($result->items(), $config);
+
         return response()->json([
-            'data' => $result->items(),
+            'data' => $data,
             'meta' => [
                 'current_page' => $result->currentPage(),
                 'per_page' => $result->perPage(),
                 'total' => $result->total(),
             ],
-            'config' => $this->getTableConfig($prefix),
+            'config' => $config,
         ]);
     }
 
@@ -84,29 +84,153 @@ class ApiIntegrationController extends Controller
     private function getTableConfig($prefix)
     {
         return [
+            'statuspenerbitan' => [
+                'primary_key' => 'issuance_id',
+                'foreign_keys' => [],
+                'labels' => [
+                    'issuance_id' => 'ID',
+                    'issuance_code' => 'Kode',
+                    'issuance_name' => 'Nama',
+                    'issuance_desc' => 'Deskripsi',
+                ],
+                'hidden' => ['created_at', 'updated_at'],
+            ],
+
+            'kelasjalan' => [
+                'primary_key' => 'kelasjalan_id',
+                'foreign_keys' => [],
+                'labels' => [
+                    'kelasjalan_id' => 'ID',
+                    'kelasjalan_code' => 'Kode',
+                    'kelasjalan_name' => 'Nama',
+                    'kelasjalan_desc' => 'Deskripsi',
+                    'muatan_sumbu_terberat' => 'MST',
+                    'vehicle_length' => 'Panjang',
+                    'vehicle_height' => 'Tinggi',
+                    'vehicle_width' => 'Lebar',
+                ],
+                'hidden' => ['created_at', 'updated_at'],
+            ],
+
+            'area' => [
+                'primary_key' => 'area_id',
+                'foreign_keys' => [],
+                'labels' => [
+                    'area_id' => 'ID',
+                    'area_code' => 'Kode',
+                    'area_name' => 'Nama',
+                    'area_address' => 'Alamat',
+                ],
+                'hidden' => ['area_email', 'area_pic', 'area_telp', 'area_active', 'area_logo_active', 'logo', 'logo_gray', 'created_at', 'updated_at'],
+            ],
+
+            'fuel' => [
+                'primary_key' => 'fuel_id',
+                'foreign_keys' => [],
+                'labels' => [
+                    'fuel_id' => 'ID',
+                    'fuel_name' => 'Nama',
+                    'fuel_desc' => 'Deskripsi',
+                ],
+                'hidden' => ['created_at', 'updated_at'],
+            ],
+
+            'pegawai' => [
+                'primary_key' => 'user_id',
+                'foreign_keys' => [],
+                'labels' => [
+                    'user_id' => 'ID',
+                    'job_name' => 'Jabatan',
+                    'identity_number' => 'NIK/NIP',
+                    'full_name' => 'Nama',
+                    'pangkat' => 'Pangkat',
+                    'email' => 'Email',
+                    'phone_number' => 'No Telepon',
+                    'address' => 'Alamat',
+                ],
+                'hidden' => ['job_type_id', 'job_type_code', 'job_type_name', 'job_id', 'job_code', 'sign_active', 'sign1', 'sign2', 'sign3', 'job_active', 'created_at', 'updated_at'],
+            ],
+
             'merk' => [
                 'primary_key' => 'vehicle_brand_id',
                 'foreign_keys' => [],
                 'labels' => [
-                    'vehicle_brand_name' => 'Nama Merk',
+                    'vehicle_brand_id' => 'ID',
+                    'vehicle_brand_code' => 'Kode',
+                    'vehicle_brand_name' => 'Nama',
+                    'vehicle_brand_desc' => 'Deskripsi',
                 ],
                 'hidden' => ['created_at', 'updated_at'],
+            ],
+
+            'variantype' => [
+                'primary_key' => 'vehicle_varian_type_id',
+                'foreign_keys' => ['vehicle_brand_id'],
+                'relations' => [
+                    'merk' => [
+                        'model' => MasterMerk::class,
+                        'foreign_key' => 'vehicle_brand_id',
+                        'owner_key' => 'vehicle_brand_id',
+                        'columns' => ['vehicle_brand_name']
+                    ]
+                ],
+                'labels' => [
+                    'vehicle_varian_type_id' => 'ID',
+                    'vehicle_varian_type_code' => 'Kode',
+                    'vehicle_varian_type_name' => 'Nama',
+                    'vehicle_varian_type_desc' => 'Deskripsi',
+                    'vehicle_brand_name' => 'Merk',
+                ],
+                'column_order' => [
+                    'vehicle_varian_type_id',
+                    'vehicle_varian_type_code',
+                    'vehicle_varian_type_name',
+                    'vehicle_brand_name',
+                    'vehicle_varian_type_desc',
+                ],
+                'hidden' => ['vehicle_brand_id', 'created_at', 'updated_at'],
             ],
 
             'varian' => [
                 'primary_key' => 'vehicle_varian_id',
                 'foreign_keys' => ['vehicle_varian_type_id'],
+                'relations' => [
+                    'varian' => [
+                        'model' => MasterMerkVarian::class,
+                        'foreign_key' => 'vehicle_varian_type_id',
+                        'owner_key' => 'vehicle_varian_type_id',
+                        'columns' => ['vehicle_varian_type_name']
+                    ]
+                ],
                 'labels' => [
-                    'vehicle_varian_name' => 'Nama Varian',
+                    'vehicle_varian_id' => 'ID',
+                    'vehicle_varian_code' => 'Kode',
+                    'vehicle_varian_name' => 'Nama',
+                    'vehicle_varian_desc' => 'Deskripsi',
                 ],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
-            'statuspenerbitan' => [
-                'primary_key' => 'issuance_id',
+            'vehicletype' => [
+                'primary_key' => 'vehicle_type_id',
                 'foreign_keys' => [],
                 'labels' => [
-                    'issuance_name' => 'Nama Status',
+                    'vehicle_type_id' => 'ID',
+                    'vehicle_type_code' => 'Kode',
+                    'vehicle_type_name' => 'Nama',
+                    'vehicle_type_desc' => 'Deskripsi',
+                ],
+                'hidden' => ['created_at', 'updated_at'],
+            ],
+
+            'subvehicletype' => [
+                'primary_key' => 'vehicle_sub_id',
+                'foreign_keys' => ['vehicle_type_id'],
+                'labels' => [
+                    'vehicle_sub_id' => 'ID',
+                    'vehicle_sub_code' => 'Kode',
+                    'vehicle_sub_name' => 'Nama',
+                    'vehicle_sub_desc' => 'Deskripsi',
                 ],
                 'hidden' => ['created_at', 'updated_at'],
             ],
