@@ -24,11 +24,9 @@ class Role extends Model
 
     public function users()
     {
-        return $this->belongsToMany(
-            User::class,
-            'm_role_users',
-            'role_id',
-            'user_id'
-        )->withPivot('is_active');
+        return $this->belongsToMany(User::class, 'm_role_users')
+            ->using(RoleUser::class)
+            ->withPivot('is_active')
+            ->withTimestamps();
     }
 }

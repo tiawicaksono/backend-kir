@@ -63,12 +63,10 @@ class User extends Authenticatable
      */
     public function roles()
     {
-        return $this->belongsToMany(
-            Role::class,
-            'm_role_users',  // pivot table
-            'user_id',
-            'role_id'
-        )->withPivot('is_active')->wherePivot('is_active', true);
+        return $this->belongsToMany(Role::class, 'm_role_users')
+            ->using(RoleUser::class)
+            ->withPivot('is_active')
+            ->withTimestamps();
     }
 
     public function directMenus()

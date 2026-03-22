@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ApiKeyResource;
 use App\Models\ApiToken;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ApiTokenController extends Controller
@@ -17,6 +18,23 @@ class ApiTokenController extends Controller
         $data = ApiToken::orderByDesc('id')->get();
         return response()->json(ApiKeyResource::collection($data));
     }
+
+    // public function index()
+    // {
+    //     $start = microtime(true);
+
+    //     DB::connection()->getPdo();
+
+    //     logger('DB connect: ' . (microtime(true) - $start));
+
+    //     $start2 = microtime(true);
+
+    //     $data = ApiToken::orderByDesc('id')->get();
+
+    //     logger('Query: ' . (microtime(true) - $start2));
+
+    //     return response()->json(ApiKeyResource::collection($data));
+    // }
 
     /**
      * Show the form for creating a new resource.
