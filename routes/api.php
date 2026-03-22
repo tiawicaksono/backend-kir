@@ -15,6 +15,7 @@ use App\Http\Controllers\MasterPegawaiController;
 use App\Http\Controllers\MasterStatusPenerbitanController;
 use App\Http\Controllers\MasterSubJenisKendaraanController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\UserManagementController;
 use App\Models\ApiIntegration;
 
 /*
@@ -64,34 +65,40 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::get('/', [MasterBahanBakarController::class, 'index']);
         Route::post('/sync', [MasterBahanBakarController::class, 'sync']);
     });
+    // Pegawai
+    Route::prefix('pegawai')->group(function () {
+        Route::get('/', [MasterPegawaiController::class, 'index']);
+        Route::post('/sync', [MasterPegawaiController::class, 'sync']);
+    });
+    // Area
+    Route::prefix('area')->group(function () {
+        Route::get('/', [MasterAreaController::class, 'index']);
+        Route::post('/sync', [MasterAreaController::class, 'sync']);
+    });
     // Merk
     Route::prefix('merk')->group(function () {
         Route::post('/', [MasterMerkController::class, 'index']);
         Route::get('/{masterMerk}', [MasterMerkController::class, 'show']);
         Route::post('/sync', [MasterMerkController::class, 'sync']);
     });
-
     // Varian Merk
     Route::prefix('variantype')->group(function () {
         Route::post('/', [MasterMerkVarianController::class, 'index']);
         Route::get('/{masterMerkVarian}', [MasterMerkVarianController::class, 'show']);
         Route::post('/sync', [MasterMerkVarianController::class, 'sync']);
     });
-
     // Tipe Varian Merk
     Route::prefix('varian')->group(function () {
         Route::post('/', [MasterMerkVarianTipeController::class, 'index']);
         Route::get('/{masterMerkVarianTipe}', [MasterMerkVarianTipeController::class, 'show']);
         Route::post('/sync', [MasterMerkVarianTipeController::class, 'sync']);
     });
-
     // Jenis Kendaraan
     Route::prefix('vehicletype')->group(function () {
         Route::post('/', [MasterJenisKendaraanController::class, 'index']);
         Route::get('/{masterJenisKendaraan}', [MasterJenisKendaraanController::class, 'show']);
         Route::post('/sync', [MasterJenisKendaraanController::class, 'sync']);
     });
-
     // Sub Jenis Kendaraan
     Route::prefix('subvehicletype')->group(function () {
         Route::post('/', [MasterSubJenisKendaraanController::class, 'index']);
@@ -99,11 +106,9 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::post('/sync', [MasterSubJenisKendaraanController::class, 'sync']);
     });
 
-    Route::post('/pegawai/sync', [MasterPegawaiController::class, 'sync']);
-    Route::post('/area/sync', [MasterAreaController::class, 'sync']);
-
     // Menu
     Route::get('/menus/me', [MenuController::class, 'me']);
+
     // Loket
     Route::prefix('loket')->group(function () {
         Route::get('/pembayaran', fn() => response()->json(['message' => 'Pembayaran OK']));
@@ -118,7 +123,6 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::delete('/rolling-alat/{id}', fn() => response()->json(['message' => 'Delete Rolling Alat OK']));
     });
 
-    // Pengaturan
     Route::prefix('pengaturan')->group(function () {
         // API KEYS
         Route::get('/api-keys', [ApiTokenController::class, 'index']);
@@ -131,4 +135,15 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::get('/api-integrations', [ApiIntegrationController::class, 'index']);
         Route::get('/api-integrations/detail/{prefix}', [ApiIntegrationController::class, 'show']);
     });
+
+    // Pengaturan
+    // ❗ KHUSUS ADMIN
+    Route::prefix('pengaturan')
+        ->middleware('check.role:1')
+        ->group(function () {
+            // USER MANAGEMENT
+            Route::get('/user-management', [UserManagementController::class, 'index']);
+            Route::post('/user-management/create', [UserManagementController::class, 'store']);
+            Route::put('/user-management/update/{id}', [UserManagementController::class, 'update']);
+        });
 });
