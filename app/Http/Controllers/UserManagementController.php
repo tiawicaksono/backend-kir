@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RoleUser;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
@@ -10,20 +10,60 @@ use Illuminate\Support\Facades\DB;
 
 class UserManagementController extends Controller
 {
+    public function counts()
+    {
+        return response()->json([
+            'user' => User::count(),
+            'role' => Role::count(),
+        ]);
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
         $model = User::class;
-        $query = $model::query();
+
+        // load roles
+        $query = $model::with('roles');
+
         $config = $this->getTableConfig();
 
         QueryFilterService::apply($query, $request, $model, $config);
+
         $perPage = $request->limit ?? 10;
+        $sortBy = $request->sort_by ?? 'id';
+        $sortDir = $request->sort_dir ?? 'desc';
+
+        $query->orderBy($sortBy, $sortDir);
+
         $result = $query->paginate($perPage);
+
+        // 🔥 transform data biar clean
+        $data = collect($result->items())->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->name,
+                'email' => $item->email,
+                'email_verified_at' => $item->email_verified_at,
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
+                'phone' => $item->phone,
+
+                // roles clean (tanpa pivot, tanpa field lain)
+                'roles' => $item->roles->map(function ($role) {
+                    return [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                        'is_active' => $role->pivot->is_active
+                    ];
+                })->values(),
+            ];
+        });
+
         return response()->json([
-            'data' => $result->items(),
+            'data' => $data,
             'meta' => [
                 'current_page' => $result->currentPage(),
                 'per_page' => $result->perPage(),
@@ -39,6 +79,8 @@ class UserManagementController extends Controller
             'primary_key' => 'id',
             'foreign_keys' => [],
             'labels' => [],
+            'searchable' => ['name', 'email'],
+            'sortable' => ['name', 'email'],
             'hidden' => ['id', 'email_verified_at', 'remember_token', 'password', 'created_at', 'updated_at'],
         ];
     }
@@ -55,12 +97,13 @@ class UserManagementController extends Controller
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
+                'phone' => $request->phone,
                 'password' => bcrypt('Password123!')
             ]);
 
             // Insert ke role_user (pivot)
-            if ($request->filled('role')) {
-                $roles = collect($request->role)
+            if ($request->filled('roles')) {
+                $roles = collect($request->roles)
                     ->mapWithKeys(fn($id) => [$id => ['is_active' => true]])
                     ->toArray();
 
@@ -71,7 +114,7 @@ class UserManagementController extends Controller
 
             return response()->json([
                 'message' => 'User berhasil dibuat',
-                'data' => $user
+                'data' => $this->transformUser($user->load('roles'))
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -97,22 +140,43 @@ class UserManagementController extends Controller
     {
         $user = User::findOrFail($id);
 
-        $inputRoles = collect($request->role); // contoh: [2,3]
+        // ✅ VALIDASI
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:m_users,email,' . $id,
+            'roles' => 'nullable|array',
+            'roles.*' => 'exists:m_roles,id',
+        ]);
 
-        // Ambil semua role user saat ini
-        $existingRoles = $user->roles()->pluck('role_id');
+        // ✅ UPDATE PROFILE
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+        ]);
 
-        // 1. Aktifkan / insert role yang dikirim
-        foreach ($inputRoles as $roleId) {
-            $user->roles()->syncWithoutDetaching([
-                $roleId => ['is_active' => true]
+        if ($request->filled('password')) {
+            $user->update([
+                'password' => bcrypt($request->password) // 🔥 jangan lupa hash
             ]);
         }
 
-        // 2. Nonaktifkan role yang tidak dikirim
-        $rolesToDeactivate = $existingRoles->diff($inputRoles);
+        // ✅ UPDATE ROLE (pakai logic kamu)
+        if ($request->has('roles')) {
+            $inputRoles = collect($request->roles); // 🔥 fix dari 'role' → 'roles'
 
-        if ($rolesToDeactivate->isNotEmpty()) {
+            $existingRoles = $user->roles()->pluck('role_id');
+
+            // 1. Aktifkan / insert role yang dikirim
+            foreach ($inputRoles as $roleId) {
+                $user->roles()->syncWithoutDetaching([
+                    $roleId => ['is_active' => true]
+                ]);
+            }
+
+            // 2. Nonaktifkan role yang tidak dikirim
+            $rolesToDeactivate = $existingRoles->diff($inputRoles);
+
             foreach ($rolesToDeactivate as $roleId) {
                 $user->roles()->updateExistingPivot($roleId, [
                     'is_active' => false
@@ -121,8 +185,27 @@ class UserManagementController extends Controller
         }
 
         return response()->json([
-            'message' => 'Roles updated successfully'
+            'message' => 'User updated successfully',
+            'data' => $this->transformUser($user->load('roles'))
         ]);
+    }
+
+    private function transformUser($user)
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'email_verified_at' => $user->email_verified_at,
+            'created_at' => $user->created_at,
+            'updated_at' => $user->updated_at,
+            'phone' => $user->phone,
+            'roles' => $user->roles->map(fn($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+                'is_active' => $role->pivot->is_active
+            ])->values(),
+        ];
     }
 
     public function updateProfile(Request $request, $id)
@@ -156,6 +239,11 @@ class UserManagementController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User deleted successfully'
+        ]);
     }
 }

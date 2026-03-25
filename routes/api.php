@@ -15,6 +15,7 @@ use App\Http\Controllers\MasterPegawaiController;
 use App\Http\Controllers\MasterStatusPenerbitanController;
 use App\Http\Controllers\MasterSubJenisKendaraanController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\UserManagementController;
 use App\Models\ApiIntegration;
 
@@ -40,6 +41,7 @@ Route::post('/login-token', [AuthController::class, 'loginToken']);
 */
 Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
     // Auth
+    Route::get('/menus/me', [MenuController::class, 'me']); // udah g kepakek
     Route::get('/user', [AuthController::class, 'profile']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -106,9 +108,6 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::post('/sync', [MasterSubJenisKendaraanController::class, 'sync']);
     });
 
-    // Menu
-    Route::get('/menus/me', [MenuController::class, 'me']);
-
     // Loket
     Route::prefix('loket')->group(function () {
         Route::get('/pembayaran', fn() => response()->json(['message' => 'Pembayaran OK']));
@@ -142,8 +141,13 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         ->middleware('check.role:1')
         ->group(function () {
             // USER MANAGEMENT
+            Route::get('/user-management/counts', [UserManagementController::class, 'counts']);
             Route::get('/user-management', [UserManagementController::class, 'index']);
             Route::post('/user-management/create', [UserManagementController::class, 'store']);
-            Route::put('/user-management/update/{id}', [UserManagementController::class, 'update']);
+            Route::put('/user-management/update/{id}', [UserManagementController::class, 'updateProfile']);
+            Route::delete('/user-management/delete/{id}', [UserManagementController::class, 'destroy']);
+            Route::put('/user-management/update/{id}/roles', [UserManagementController::class, 'updateRole']);
+
+            Route::get('/role-management', [RoleManagementController::class, 'index']);
         });
 });

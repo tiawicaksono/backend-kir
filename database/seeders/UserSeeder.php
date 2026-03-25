@@ -19,12 +19,14 @@ class UserSeeder extends Seeder
         User::insert([
             [
                 'name' => 'Admin',
+                'phone' => '085755124531',
                 'email' => 'admin@kir.com',
                 'password' => bcrypt('password'),
                 'role_id' => $admin->id
             ],
             [
                 'name' => 'Tia Wicaksono',
+                'phone' => '085755124535',
                 'email' => 'wicaksono.tia@gmail.com',
                 'password' => bcrypt('password'),
                 'role_id' => $admin->id
@@ -35,12 +37,14 @@ class UserSeeder extends Seeder
         User::insert([
             [
                 'name' => 'Operator 1',
+                'phone' => '085755124532',
                 'email' => 'operator1@kir.com',
                 'password' => bcrypt('password'),
                 'role_id' => $staff->id
             ],
             [
                 'name' => 'Operator 2',
+                'phone' => '085755124533',
                 'email' => 'operator2@kir.com',
                 'password' => bcrypt('password'),
                 'role_id' => $staff->id
@@ -51,12 +55,14 @@ class UserSeeder extends Seeder
         User::insert([
             [
                 'name' => 'Penguji 1',
+                'phone' => '085755124534',
                 'email' => 'penguji1@kir.com',
                 'password' => bcrypt('password'),
                 'role_id' => $penguji->id
             ],
             [
                 'name' => 'Penguji 2',
+                'phone' => '085755124536',
                 'email' => 'penguji2@kir.com',
                 'password' => bcrypt('password'),
                 'role_id' => $penguji->id
