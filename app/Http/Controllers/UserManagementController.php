@@ -90,6 +90,15 @@ class UserManagementController extends Controller
      */
     public function store(Request $request)
     {
+        // ✅ VALIDASI
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:m_users,email',
+            'phone' => 'required|string|max:20|unique:m_users,phone',
+            'roles' => 'nullable|array',
+            'roles.*' => 'exists:m_roles,id',
+        ]);
+
         DB::beginTransaction();
 
         try {
@@ -127,13 +136,6 @@ class UserManagementController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-    /**
      * Update the specified resource in storage.
      */
     public function updateRole(Request $request, $id)
@@ -144,6 +146,7 @@ class UserManagementController extends Controller
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:m_users,email,' . $id,
+            'phone' => 'required|string|max:20|unique:m_users,phone',
             'roles' => 'nullable|array',
             'roles.*' => 'exists:m_roles,id',
         ]);

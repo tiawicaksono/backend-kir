@@ -9,7 +9,6 @@ class Role extends Model
     protected $table = 'm_roles';
     protected $fillable = [
         'name',
-        'description',
     ];
 
     public function menus()

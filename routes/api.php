@@ -149,5 +149,8 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
             Route::put('/user-management/update/{id}/roles', [UserManagementController::class, 'updateRole']);
 
             Route::get('/role-management', [RoleManagementController::class, 'index']);
+            Route::post('/role-management/create', [RoleManagementController::class, 'store']);
+            Route::put('/role-management/update/{id}', [RoleManagementController::class, 'update']);
+            Route::delete('/role-management/delete/{id}', [RoleManagementController::class, 'destroy']);
         });
 });
