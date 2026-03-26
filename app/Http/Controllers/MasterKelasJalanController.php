@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\KelasJalanResource;
+use App\Http\Resources\TrnSinkronResource;
 use App\Models\MasterKelasJalan;
 use App\Models\TrnSinkron;
 use App\Services\KemenhubService;
@@ -36,14 +37,15 @@ class MasterKelasJalanController extends Controller
         $prefix = $validated['prefix'];
         $url_api = $validated['url_api'];
         $token = $validated['token'];
+        $transaction = null;
         try {
-            $result = $this->kemenhubService->getStatusPenerbitan(
+            $result = $this->kemenhubService->getDataSync(
                 $url_api,
                 $token,
                 $prefix
             );
 
-            DB::transaction(function () use ($result, $api_integration_id, $prefix, $name, $url_api, $token) {
+            DB::transaction(function () use ($result, $api_integration_id, $prefix, $name, $url_api, $token, &$transaction) {
 
                 foreach ($result['data'] ?? [] as $item) {
 
@@ -62,7 +64,7 @@ class MasterKelasJalanController extends Controller
                 }
 
                 // history sukses
-                TrnSinkron::create([
+                $transaction = TrnSinkron::create([
                     'api_integration_id' => $api_integration_id,
                     'name' => $name,
                     'prefix' => $prefix,
@@ -74,12 +76,13 @@ class MasterKelasJalanController extends Controller
             });
 
             return response()->json([
-                'message' => 'Sinkronisasi berhasil'
+                'message' => 'Sinkronisasi berhasil',
+                'transaction' => new TrnSinkronResource($transaction)
             ]);
         } catch (\Exception $e) {
 
             // history gagal
-            TrnSinkron::create([
+            $transaction = TrnSinkron::create([
                 'api_integration_id' => $api_integration_id,
                 'name' => $name,
                 'prefix' => $prefix,
@@ -90,8 +93,8 @@ class MasterKelasJalanController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Sinkronisasi gagal',
-                'error'   => $e->getMessage()
+                'message'   => $e->getMessage(),
+                'transaction' => new TrnSinkronResource($transaction)
             ], 500);
         }
     }

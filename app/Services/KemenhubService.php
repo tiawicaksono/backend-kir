@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 class KemenhubService
 {
-    public function getStatusPenerbitan(string $urlApi, string $token, string $prefix)
+    public function getDataSync(string $urlApi, string $token, string $prefix)
     {
         /**
          * retry 3x

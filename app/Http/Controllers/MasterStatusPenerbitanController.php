@@ -39,7 +39,7 @@ class MasterStatusPenerbitanController extends Controller
         $token = $validated['token'];
         $transaction = null;
         try {
-            $result = $this->kemenhubService->getStatusPenerbitan(
+            $result = $this->kemenhubService->getDataSync(
                 $url_api,
                 $token,
                 $prefix

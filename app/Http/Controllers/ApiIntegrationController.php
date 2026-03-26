@@ -93,6 +93,8 @@ class ApiIntegrationController extends Controller
                     'issuance_name' => 'Nama',
                     'issuance_desc' => 'Deskripsi',
                 ],
+                'searchable' => ['issuance_code', 'issuance_name', 'issuance_desc'],
+                'sortable' => ['issuance_id', 'issuance_code', 'issuance_name'],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -109,6 +111,8 @@ class ApiIntegrationController extends Controller
                     'vehicle_height' => 'Tinggi',
                     'vehicle_width' => 'Lebar',
                 ],
+                'searchable' => ['kelasjalan_code', 'kelasjalan_name', 'kelasjalan_desc'],
+                'sortable' => ['kelasjalan_id', 'kelasjalan_code', 'kelasjalan_name'],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -121,6 +125,8 @@ class ApiIntegrationController extends Controller
                     'area_name' => 'Nama',
                     'area_address' => 'Alamat',
                 ],
+                'searchable' => ['area_code', 'area_name'],
+                'sortable' => ['area_id', 'area_code', 'area_name'],
                 'hidden' => ['area_email', 'area_pic', 'area_telp', 'area_active', 'area_logo_active', 'logo', 'logo_gray', 'created_at', 'updated_at'],
             ],
 
@@ -132,6 +138,8 @@ class ApiIntegrationController extends Controller
                     'fuel_name' => 'Nama',
                     'fuel_desc' => 'Deskripsi',
                 ],
+                'searchable' => ['fuel_name', 'fuel_desc'],
+                'sortable' => ['fuel_id', 'fuel_name'],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -148,6 +156,8 @@ class ApiIntegrationController extends Controller
                     'phone_number' => 'No Telepon',
                     'address' => 'Alamat',
                 ],
+                'searchable' => ['full_name', 'job_name'],
+                'sortable' => ['user_id', 'job_name', 'full_name'],
                 'hidden' => ['job_type_id', 'job_type_code', 'job_type_name', 'job_id', 'job_code', 'sign_active', 'sign1', 'sign2', 'sign3', 'job_active', 'created_at', 'updated_at'],
             ],
 
@@ -160,6 +170,8 @@ class ApiIntegrationController extends Controller
                     'vehicle_brand_name' => 'Nama',
                     'vehicle_brand_desc' => 'Deskripsi',
                 ],
+                'searchable' => ['vehicle_brand_code', 'vehicle_brand_name', 'vehicle_brand_desc'],
+                'sortable' => ['vehicle_brand_id', 'vehicle_brand_code', 'vehicle_brand_name'],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -181,13 +193,15 @@ class ApiIntegrationController extends Controller
                     'vehicle_varian_type_desc' => 'Deskripsi',
                     'vehicle_brand_name' => 'Merk',
                 ],
-                'column_order' => [
-                    'vehicle_varian_type_id',
-                    'vehicle_varian_type_code',
-                    'vehicle_varian_type_name',
-                    'vehicle_brand_name',
-                    'vehicle_varian_type_desc',
-                ],
+                // 'column_order' => [
+                //     'vehicle_varian_type_id',
+                //     'vehicle_varian_type_code',
+                //     'vehicle_varian_type_name',
+                //     'vehicle_brand_name',
+                //     'vehicle_varian_type_desc',
+                // ],
+                'searchable' => ['vehicle_varian_type_code', 'vehicle_varian_type_name', 'vehicle_brand_name'],
+                'sortable' => ['vehicle_varian_type_id', 'vehicle_varian_type_code', 'vehicle_varian_type_name', 'vehicle_brand_name'],
                 'hidden' => ['vehicle_brand_id', 'created_at', 'updated_at'],
             ],
 
@@ -208,6 +222,8 @@ class ApiIntegrationController extends Controller
                     'vehicle_varian_name' => 'Nama',
                     'vehicle_varian_desc' => 'Deskripsi',
                 ],
+                'searchable' => ['vehicle_varian_code', 'vehicle_varian_name', 'vehicle_varian_desc'],
+                'sortable' => ['vehicle_varian_id', 'vehicle_varian_code', 'vehicle_varian_name'],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -220,6 +236,8 @@ class ApiIntegrationController extends Controller
                     'vehicle_type_name' => 'Nama',
                     'vehicle_type_desc' => 'Deskripsi',
                 ],
+                'searchable' => ['vehicle_type_code', 'vehicle_type_name', 'vehicle_type_desc'],
+                'sortable' => ['vehicle_type_id', 'vehicle_type_code', 'vehicle_type_name'],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -232,6 +250,8 @@ class ApiIntegrationController extends Controller
                     'vehicle_sub_name' => 'Nama',
                     'vehicle_sub_desc' => 'Deskripsi',
                 ],
+                'searchable' => ['vehicle_sub_code', 'vehicle_sub_name', 'vehicle_sub_desc'],
+                'sortable' => ['vehicle_sub_id', 'vehicle_sub_code', 'vehicle_sub_name'],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
