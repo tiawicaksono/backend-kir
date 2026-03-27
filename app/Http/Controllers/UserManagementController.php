@@ -146,7 +146,7 @@ class UserManagementController extends Controller
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:m_users,email,' . $id,
-            'phone' => 'required|string|max:20|unique:m_users,phone',
+            'phone' => 'required|string|max:20|unique:m_users,phone,' . $id,
             'roles' => 'nullable|array',
             'roles.*' => 'exists:m_roles,id',
         ]);
@@ -218,6 +218,7 @@ class UserManagementController extends Controller
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:m_users,email,' . $id,
+            'phone' => 'required|string|max:20|unique:m_users,phone,' . $id,
         ]);
 
         $user->update([

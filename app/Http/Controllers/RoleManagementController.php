@@ -94,7 +94,7 @@ class RoleManagementController extends Controller
 
         // ✅ VALIDASI
         $request->validate([
-            'name' => 'required|string|max:100|unique:m_roles,name'
+            'name' => 'required|string|max:100|unique:m_roles,name,' . $id
         ]);
 
         $role->update([

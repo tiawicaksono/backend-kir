@@ -7,17 +7,20 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MasterAreaController;
 use App\Http\Controllers\MasterBahanBakarController;
 use App\Http\Controllers\MasterJenisKendaraanController;
+use App\Http\Controllers\MasterKecamatanController;
 use App\Http\Controllers\MasterKelasJalanController;
+use App\Http\Controllers\MasterKelurahanController;
+use App\Http\Controllers\MasterKotaController;
 use App\Http\Controllers\MasterMerkController;
 use App\Http\Controllers\MasterMerkVarianController;
 use App\Http\Controllers\MasterMerkVarianTipeController;
 use App\Http\Controllers\MasterPegawaiController;
+use App\Http\Controllers\MasterProvinsiController;
 use App\Http\Controllers\MasterStatusPenerbitanController;
 use App\Http\Controllers\MasterSubJenisKendaraanController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\UserManagementController;
-use App\Models\ApiIntegration;
 
 /*
 |--------------------------------------------------------------------------
@@ -148,9 +151,35 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
             Route::delete('/user-management/delete/{id}', [UserManagementController::class, 'destroy']);
             Route::put('/user-management/update/{id}/roles', [UserManagementController::class, 'updateRole']);
 
+            // ROLE MANAGEMENT
             Route::get('/role-management', [RoleManagementController::class, 'index']);
             Route::post('/role-management/create', [RoleManagementController::class, 'store']);
             Route::put('/role-management/update/{id}', [RoleManagementController::class, 'update']);
             Route::delete('/role-management/delete/{id}', [RoleManagementController::class, 'destroy']);
+
+            // PROVINSI
+            // Route::get('/provinsi', [MasterProvinsiController::class, 'index']);
+            // Route::post('/provinsi/create', [MasterProvinsiController::class, 'store']);
+            // Route::put('/provinsi/{id}', [MasterProvinsiController::class, 'update']);
+            // Route::delete('/provinsi/{id}', [MasterProvinsiController::class, 'destroy']);
+            Route::apiResource('provinsi', MasterProvinsiController::class);
+            // KOTA/KABUPATEN
+            Route::get('/kota', [MasterKotaController::class, 'index']);
+            Route::post('/kota/create', [MasterKotaController::class, 'store']);
+            Route::put('/kota/{id}', [MasterKotaController::class, 'update']);
+            Route::delete('/kota/{id}', [MasterKotaController::class, 'destroy']);
+            // Route::apiResource('kota', MasterKotaController::class);
+            // KECAMATAN
+            // Route::get('/kecamatan', [MasterKecamatanController::class, 'index']);
+            // Route::post('/kecamatan/create', [MasterKecamatanController::class, 'store']);
+            // Route::put('/kecamatan/{id}', [MasterKecamatanController::class, 'update']);
+            // Route::delete('/kecamatan/{id}', [MasterKecamatanController::class, 'destroy']);
+            Route::apiResource('kecamatan', MasterKecamatanController::class);
+            // KELURAHAN/DESA
+            // Route::get('/kelurahan', [MasterKelurahanController::class, 'index']);
+            // Route::post('/kelurahan/create', [MasterKelurahanController::class, 'store']);
+            // Route::put('/kelurahan/{id}', [MasterKelurahanController::class, 'update']);
+            // Route::delete('/kelurahan/{id}', [MasterKelurahanController::class, 'destroy']);
+            Route::apiResource('kelurahan', MasterKelurahanController::class);
         });
 });
