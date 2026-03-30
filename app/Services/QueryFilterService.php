@@ -9,7 +9,9 @@ class QueryFilterService
 {
     public static function apply(Builder $query, $request, $model, $config = [])
     {
-        $table = (new $model)->getTable();
+        // 🔥 ROOT TABLE (AMAN)
+        $table = $config['table']
+            ?? (new $model)->getTable();
 
         // 🔥 ambil kolom valid
         $validColumns = cache()->remember("columns_$table", 3600, function () use ($table) {
@@ -24,22 +26,22 @@ class QueryFilterService
         if ($request->filled('search')) {
             $keyword = strtolower(trim($request->search));
 
-            // 🔥 SEARCH BY
             if ($request->filled('search_by')) {
                 $col = $request->search_by;
 
-                // kolom utama
+                // 🔹 kolom utama
                 if (in_array($col, $validColumns)) {
                     $query->whereRaw(
-                        "LOWER(CAST($col AS TEXT)) LIKE ?",
+                        "LOWER(CAST($table.$col AS TEXT)) LIKE ?",
                         ["%{$keyword}%"]
                     );
                 }
 
-                // relasi
+                // 🔹 relasi
                 if (!empty($config['relations'])) {
                     foreach ($config['relations'] as $relation => $relConfig) {
-                        if (in_array($col, $relConfig['columns'])) {
+
+                        if (in_array($col, $relConfig['columns'] ?? [])) {
                             $query->orWhereHas($relation, function ($q) use ($col, $keyword) {
                                 $q->whereRaw(
                                     "LOWER(CAST($col AS TEXT)) LIKE ?",
@@ -51,7 +53,7 @@ class QueryFilterService
                 }
             }
 
-            // 🔥 GLOBAL SEARCH (FIX TOTAL)
+            // 🔥 GLOBAL SEARCH
             else {
                 $query->where(function ($q) use ($validColumns, $keyword, $config) {
 
@@ -114,23 +116,79 @@ class QueryFilterService
             if (!in_array($key, $validColumns)) continue;
 
             if (is_array($value)) {
-                $query->whereIn($key, $value);
+                $query->whereIn("$table.$key", $value);
             } else {
-                $query->where($key, $value);
+                $query->where("$table.$key", $value);
             }
         }
 
         /**
          * =========================================================
-         * 🔥 SORT
+         * 🔥 SORT (SUPPORT RELATION)
          * =========================================================
          */
         if ($request->filled('sort_by')) {
-            if (in_array($request->sort_by, $validColumns)) {
-                $query->orderBy(
-                    $request->sort_by,
-                    $request->sort_order ?? 'asc'
-                );
+
+            $sortBy = $request->sort_by;
+            $sortDir = $request->sort_order ?? 'asc';
+
+            $isSorted = false;
+
+            // 🔹 kolom utama
+            if (in_array($sortBy, $validColumns)) {
+                $query->orderBy("$table.$sortBy", $sortDir);
+                $isSorted = true;
+            }
+
+            // 🔹 relasi
+            if (!$isSorted && !empty($config['relations'])) {
+                foreach ($config['relations'] as $relation => $relConfig) {
+
+                    if (in_array($sortBy, $relConfig['columns'] ?? [])) {
+
+                        $relations = explode('.', $relation);
+                        $currentTable = $table;
+                        $previousKey = null;
+
+                        foreach ($relations as $index => $rel) {
+
+                            $relConf = $config['relations'][implode('.', array_slice($relations, 0, $index + 1))] ?? null;
+
+                            if (!$relConf) continue;
+
+                            $relTable = $relConf['table']
+                                ?? (isset($relConf['model'])
+                                    ? (new $relConf['model'])->getTable()
+                                    : null);
+
+                            if (!$relTable) continue;
+
+                            $foreignKey = $relConf['foreign_key'];
+                            $ownerKey = $relConf['owner_key'];
+
+                            // 🔥 JOIN BERANTAI
+                            $query->leftJoin(
+                                $relTable,
+                                "$currentTable.$foreignKey",
+                                '=',
+                                "$relTable.$ownerKey"
+                            );
+
+                            $currentTable = $relTable;
+                        }
+
+                        // 🔥 FINAL SORT
+                        $query->orderBy("$currentTable.$sortBy", $sortDir)
+                            ->select("$table.*");
+
+                        break;
+                    }
+                }
+            }
+
+            // 🔹 default fallback (kalau gak ketemu)
+            if (!$isSorted) {
+                $query->orderBy("$table.id", 'desc');
             }
         }
 

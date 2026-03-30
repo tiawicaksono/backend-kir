@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FlattenHelper;
+use App\Http\Resources\MasterKecamatanResource;
 use App\Models\MasterKecamatan;
 use App\Models\MasterKota;
 use App\Services\QueryFilterService;
@@ -25,9 +26,6 @@ class MasterKecamatanController extends BaseApiController
         QueryFilterService::apply($query, $request, $model, $config);
 
         $perPage = $request->limit ?? 10;
-        $sortBy = $request->sort_by ?? 'nama_kecamatan';
-        $sortDir = $request->sort_dir ?? 'desc';
-        $query->orderBy($sortBy, $sortDir);
         $result = $query->paginate($perPage);
 
         // 🔥 FLATTEN DATA
@@ -57,10 +55,14 @@ class MasterKecamatanController extends BaseApiController
                     'columns' => ['nama_kota']
                 ]
             ],
-            'labels' => [],
-            'searchable' => ['nama_kecamatan'],
-            'sortable' => ['nama_kecamatan'],
-            'hidden' => ['created_at', 'updated_at'],
+            'labels' => [
+                'id' => 'ID',
+                'nama_kecamatan' => 'Kecamatan',
+                'nama_kota' => 'Kota',
+            ],
+            'searchable' => ['nama_kecamatan', 'nama_kota'],
+            'sortable' => ['id', 'nama_kecamatan', 'nama_kota'],
+            'hidden' => ['kota_id', 'created_at', 'updated_at'],
         ];
     }
 
@@ -84,9 +86,10 @@ class MasterKecamatanController extends BaseApiController
 
         try {
             $data = MasterKecamatan::create($validator->validated());
+            $data->load('kota');
 
             return $this->success(
-                $data,
+                new MasterKecamatanResource($data),
                 'Data created successfully',
                 201
             );
@@ -124,9 +127,10 @@ class MasterKecamatanController extends BaseApiController
             }
 
             $data->update($validator->validated());
+            $data->load('kota');
 
             return $this->success(
-                $data,
+                new MasterKecamatanResource($data),
                 'Data updated successfully',
                 200
             );

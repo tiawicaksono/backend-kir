@@ -21,11 +21,6 @@ class RoleManagementController extends Controller
         QueryFilterService::apply($query, $request, $model, $config);
 
         $perPage = $request->limit ?? 10;
-        $sortBy = $request->sort_by ?? 'id';
-        $sortDir = $request->sort_dir ?? 'desc';
-
-        $query->orderBy($sortBy, $sortDir);
-
         $result = $query->paginate($perPage);
 
         // 🔥 transform data biar clean

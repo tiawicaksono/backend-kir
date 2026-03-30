@@ -9,18 +9,31 @@ class FlattenHelper
         return collect($data)->map(function ($item) use ($config) {
             $row = $item->toArray();
 
-            // 🔥 HANDLE RELATIONS
             if (!empty($config['relations'])) {
                 foreach ($config['relations'] as $relName => $relConfig) {
 
-                    if (!isset($row[$relName])) continue;
-
                     foreach ($relConfig['columns'] as $col) {
-                        $row[$col] = $row[$relName][$col] ?? null;
+
+                        // 🔥 ambil nested value
+                        $value = $item;
+
+                        foreach (explode('.', $relName) as $relation) {
+                            $value = optional($value)->{$relation};
+                        }
+
+                        $row[$col] = optional($value)->{$col};
                     }
 
-                    // 🔥 hapus nested object
-                    unset($row[$relName]);
+                    // 🔥 HAPUS RELASI (support nested)
+                    $topRelation = explode('.', $relName)[0];
+                    unset($row[$topRelation]);
+                }
+            }
+
+            // 🔥 HIDDEN
+            if (!empty($config['hidden'])) {
+                foreach ($config['hidden'] as $hidden) {
+                    unset($row[$hidden]);
                 }
             }
 

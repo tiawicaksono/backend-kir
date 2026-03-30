@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FlattenHelper;
+use App\Models\MasterKecamatan;
+use App\Models\MasterKelurahan;
+use App\Models\MasterKota;
 use App\Models\MasterProvinsi;
 use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
@@ -11,6 +14,15 @@ use Illuminate\Support\Facades\Validator;
 
 class MasterProvinsiController extends BaseApiController
 {
+    public function counts()
+    {
+        return response()->json([
+            'provinsi' => MasterProvinsi::count(),
+            'kota' => MasterKota::count(),
+            'kecamatan' => MasterKecamatan::count(),
+            'kelurahan' => MasterKelurahan::count(),
+        ]);
+    }
     /**
      * Display a listing of the resource.
      */
@@ -24,9 +36,6 @@ class MasterProvinsiController extends BaseApiController
         QueryFilterService::apply($query, $request, $model, $config);
 
         $perPage = $request->limit ?? 10;
-        $sortBy = $request->sort_by ?? 'nama_provinsi';
-        $sortDir = $request->sort_dir ?? 'desc';
-        $query->orderBy($sortBy, $sortDir);
         $result = $query->paginate($perPage);
 
         // 🔥 FLATTEN DATA
@@ -48,9 +57,12 @@ class MasterProvinsiController extends BaseApiController
         return [
             'primary_key' => 'id',
             'foreign_keys' => [],
-            'labels' => [],
+            'labels' => [
+                'id' => 'ID',
+                'nama_provinsi' => 'Provinsi',
+            ],
             'searchable' => ['nama_provinsi'],
-            'sortable' => ['nama_provinsi'],
+            'sortable' => ['id', 'nama_provinsi'],
             'hidden' => ['created_at', 'updated_at'],
         ];
     }
@@ -62,7 +74,7 @@ class MasterProvinsiController extends BaseApiController
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required|string|max:2|unique:master_provinsis',
-            'nama_provinsi' => 'required|string|max:100'
+            'name' => 'required|string|max:100'
         ]);
         if ($validator->fails()) {
             return $this->error(
@@ -73,7 +85,11 @@ class MasterProvinsiController extends BaseApiController
         }
 
         try {
-            $data = MasterProvinsi::create($validator->validated());
+            // $data = MasterProvinsi::create($validator->validated());
+            $data = MasterProvinsi::create([
+                'id' => $validator->validated()['id'],
+                'nama_provinsi' => $validator->validated()['name']
+            ]);
 
             return $this->success(
                 $data,
@@ -101,7 +117,7 @@ class MasterProvinsiController extends BaseApiController
         try {
             $validator = Validator::make($request->all(), [
                 'id' => 'required|string|max:2|unique:master_provinsis,id,' . $id,
-                'nama_provinsi' => 'required|string|max:100'
+                'name' => 'required|string|max:100'
             ]);
 
             if ($validator->fails()) {
@@ -112,7 +128,11 @@ class MasterProvinsiController extends BaseApiController
                 );
             }
 
-            $data->update($validator->validated());
+            // $data->update($validator->validated());
+            $data->update([
+                'id' => $validator->validated()['id'],
+                'nama_provinsi' => $validator->validated()['name']
+            ]);
 
             return $this->success(
                 $data,

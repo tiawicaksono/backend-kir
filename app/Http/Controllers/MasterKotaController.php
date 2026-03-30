@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FlattenHelper;
+use App\Http\Resources\MasterKotaResource;
 use App\Models\MasterKota;
 use App\Models\MasterProvinsi;
 use App\Services\QueryFilterService;
@@ -25,9 +26,6 @@ class MasterKotaController extends BaseApiController
         QueryFilterService::apply($query, $request, $model, $config);
 
         $perPage = $request->limit ?? 10;
-        $sortBy = $request->sort_by ?? 'nama_kota';
-        $sortDir = $request->sort_dir ?? 'desc';
-        $query->orderBy($sortBy, $sortDir);
         $result = $query->paginate($perPage);
 
         // 🔥 FLATTEN DATA
@@ -57,10 +55,14 @@ class MasterKotaController extends BaseApiController
                     'columns' => ['nama_provinsi']
                 ]
             ],
-            'labels' => [],
-            'searchable' => ['nama_kota'],
-            'sortable' => ['nama_kota'],
-            'hidden' => ['created_at', 'updated_at'],
+            'labels' => [
+                'id' => 'ID',
+                'nama_kota' => 'Kota',
+                'nama_provinsi' => 'Provinsi',
+            ],
+            'searchable' => ['nama_kota', 'nama_provinsi'],
+            'sortable' => ['id', 'nama_kota', 'nama_provinsi'],
+            'hidden' => ['provinsi_id', 'created_at', 'updated_at'],
         ];
     }
 
@@ -84,9 +86,10 @@ class MasterKotaController extends BaseApiController
 
         try {
             $data = MasterKota::create($validator->validated());
+            $data->load('provinsi');
 
             return $this->success(
-                $data,
+                new MasterKotaResource($data),
                 'Data created successfully',
                 201
             );
@@ -124,9 +127,10 @@ class MasterKotaController extends BaseApiController
             }
 
             $data->update($validator->validated());
+            $data->load('provinsi');
 
             return $this->success(
-                $data,
+                new MasterKotaResource($data),
                 'Data updated successfully',
                 200
             );

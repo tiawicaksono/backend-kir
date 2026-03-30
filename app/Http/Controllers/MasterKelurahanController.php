@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FlattenHelper;
+use App\Http\Resources\MasterKelurahanResource;
 use App\Models\MasterKecamatan;
 use App\Models\MasterKelurahan;
+use App\Models\MasterKota;
 use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -18,16 +20,13 @@ class MasterKelurahanController extends BaseApiController
     public function index(Request $request)
     {
         $model = MasterKelurahan::class;
-        $query = $model::with('kecamatan');
+        $query = $model::with('kecamatan.kota');
 
         $config = $this->getTableConfig();
 
         QueryFilterService::apply($query, $request, $model, $config);
 
         $perPage = $request->limit ?? 10;
-        $sortBy = $request->sort_by ?? 'nama_kelurahan';
-        $sortDir = $request->sort_dir ?? 'desc';
-        $query->orderBy($sortBy, $sortDir);
         $result = $query->paginate($perPage);
 
         // 🔥 FLATTEN DATA
@@ -55,12 +54,24 @@ class MasterKelurahanController extends BaseApiController
                     'foreign_key' => 'kecamatan_id',
                     'owner_key' => 'id',
                     'columns' => ['nama_kecamatan']
+                ],
+                // 🔥 NESTED RELATION
+                'kecamatan.kota' => [
+                    'model' => MasterKota::class,
+                    'foreign_key' => 'kota_id',
+                    'owner_key' => 'id',
+                    'columns' => ['nama_kota']
                 ]
             ],
-            'labels' => [],
-            'searchable' => ['nama_kelurahan'],
-            'sortable' => ['nama_kelurahan'],
-            'hidden' => ['created_at', 'updated_at'],
+            'labels' => [
+                'id' => 'ID',
+                'nama_kelurahan' => 'Kelurahan',
+                'nama_kecamatan' => 'Kecamatan',
+                'nama_kota' => 'Kota',
+            ],
+            'searchable' => ['nama_kelurahan', 'nama_kecamatan', 'nama_kota'],
+            'sortable' => ['id', 'nama_kelurahan', 'nama_kecamatan', 'nama_kota'],
+            'hidden' => ['kecamatan_id', 'created_at', 'updated_at'],
         ];
     }
 
@@ -84,9 +95,10 @@ class MasterKelurahanController extends BaseApiController
 
         try {
             $data = MasterKelurahan::create($validator->validated());
+            $data->load('kecamatan');
 
             return $this->success(
-                $data,
+                new MasterKelurahanResource($data),
                 'Data created successfully',
                 201
             );
@@ -124,9 +136,10 @@ class MasterKelurahanController extends BaseApiController
             }
 
             $data->update($validator->validated());
+            $data->load('kecamatan');
 
             return $this->success(
-                $data,
+                new MasterKelurahanResource($data),
                 'Data updated successfully',
                 200
             );
