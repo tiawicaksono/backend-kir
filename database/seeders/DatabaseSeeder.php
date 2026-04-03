@@ -30,10 +30,11 @@ class DatabaseSeeder extends Seeder
             // RoleUserSeeder::class,    // 6️⃣ role_user (butuh user + role)
             // ApiTokenSeeder::class,      // 7️⃣ api_token
             // ApiIntegrationSeeder::class, // 8️⃣ api_integration
-            MasterProvinsiSeeder::class, // 9️⃣ master_provinsi
-            MasterKotaSeeder::class,     // 10️⃣ master_kota
-            MasterKecamatanSeeder::class, // 11️⃣ master_kecamatan
-            MasterKelurahanSeeder::class, // 12️⃣ master_kelurahan
+            // MasterProvinsiSeeder::class, // 9️⃣ master_provinsi
+            // MasterKotaSeeder::class,     // 10️⃣ master_kota
+            // MasterKecamatanSeeder::class, // 11️⃣ master_kecamatan
+            // MasterKelurahanSeeder::class, // 12️⃣ master_kelurahan
+            // MasterBahanUtamaSeeder::class, // 13️⃣ master_bahan_utama
         ]);
     }
 }

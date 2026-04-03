@@ -14,9 +14,12 @@ class QueryFilterService
             ?? (new $model)->getTable();
 
         // 🔥 ambil kolom valid
-        $validColumns = cache()->remember("columns_$table", 3600, function () use ($table) {
-            return Schema::getColumnListing($table);
+        $schema = config('database.connections.pgsql.schema', 'public');
+
+        $validColumns = cache()->remember("columns_{$schema}_$table", 3600, function () use ($table, $schema) {
+            return Schema::getColumnListing($schema . '.' . $table);
         });
+        // dd($table, $validColumns);
 
         /**
          * =========================================================

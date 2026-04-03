@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MasterAreaController;
 use App\Http\Controllers\MasterBahanBakarController;
+use App\Http\Controllers\MasterBahanUtamaController;
 use App\Http\Controllers\MasterJenisKendaraanController;
 use App\Http\Controllers\MasterKecamatanController;
 use App\Http\Controllers\MasterKelasJalanController;
@@ -159,28 +160,20 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
 
             // PROVINSI
             Route::get('/provinsi/counts', [MasterProvinsiController::class, 'counts']);
-            // Route::get('/provinsi', [MasterProvinsiController::class, 'index']);
-            // Route::post('/provinsi', [MasterProvinsiController::class, 'store']);
-            // Route::put('/provinsi/{id}', [MasterProvinsiController::class, 'update']);
-            // Route::delete('/provinsi/{id}', [MasterProvinsiController::class, 'destroy']);
             Route::apiResource('provinsi', MasterProvinsiController::class);
             // KOTA/KABUPATEN
-            // Route::get('/kota', [MasterKotaController::class, 'index']);
-            // Route::post('/kota', [MasterKotaController::class, 'store']);
-            // Route::put('/kota/{id}', [MasterKotaController::class, 'update']);
-            // Route::delete('/kota/{id}', [MasterKotaController::class, 'destroy']);
             Route::apiResource('kota', MasterKotaController::class);
             // KECAMATAN
-            // Route::get('/kecamatan', [MasterKecamatanController::class, 'index']);
-            // Route::post('/kecamatan', [MasterKecamatanController::class, 'store']);
-            // Route::put('/kecamatan/{id}', [MasterKecamatanController::class, 'update']);
-            // Route::delete('/kecamatan/{id}', [MasterKecamatanController::class, 'destroy']);
             Route::apiResource('kecamatan', MasterKecamatanController::class);
             // KELURAHAN/DESA
-            // Route::get('/kelurahan', [MasterKelurahanController::class, 'index']);
-            // Route::post('/kelurahan', [MasterKelurahanController::class, 'store']);
-            // Route::put('/kelurahan/{id}', [MasterKelurahanController::class, 'update']);
-            // Route::delete('/kelurahan/{id}', [MasterKelurahanController::class, 'destroy']);
             Route::apiResource('kelurahan', MasterKelurahanController::class);
+
+            // BAHAN UTAMA
+            Route::get('/bahanutama/counts', [MasterBahanUtamaController::class, 'counts']);
+            Route::apiResource('bahanutama', MasterBahanUtamaController::class);
+
+            // STATUS PENERBITAN
+            Route::get('/statuspenerbitan/counts', [MasterStatusPenerbitanController::class, 'counts']);
+            Route::apiResource('statuspenerbitan', MasterStatusPenerbitanController::class);
         });
 });

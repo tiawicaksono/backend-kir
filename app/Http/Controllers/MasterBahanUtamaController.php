@@ -3,28 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FlattenHelper;
-use App\Http\Resources\MasterKelurahanResource;
-use App\Models\MasterKecamatan;
-use App\Models\MasterKelurahan;
-use App\Models\MasterKota;
+use App\Models\MasterBahanUtama;
 use App\Services\QueryFilterService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class MasterKelurahanController extends BaseApiController
+class MasterBahanUtamaController extends BaseApiController
 {
+    public function counts()
+    {
+        return response()->json([
+            'countData' => MasterBahanUtama::count(),
+        ]);
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $model = MasterKelurahan::class;
-        $query = $model::with('kecamatan.kota');
-
+        //     dd(
+        //         DB::select("
+        //     SELECT column_name
+        //     FROM information_schema.columns
+        //     WHERE table_name = 'master_bahan_utamas'
+        // ")
+        //     );
+        $model = MasterBahanUtama::class;
+        $query = $model::query();
         $config = $this->getTableConfig();
 
         QueryFilterService::apply($query, $request, $model, $config);
+        // dd($query->toSql(), $query->getBindings());
 
         $perPage = $request->limit ?? 10;
         $result = $query->paginate($perPage);
@@ -47,31 +59,14 @@ class MasterKelurahanController extends BaseApiController
     {
         return [
             'primary_key' => 'id',
-            'foreign_keys' => ['kecamatan_id'],
-            'relations' => [
-                'kecamatan' => [
-                    'model' => MasterKecamatan::class,
-                    'foreign_key' => 'kecamatan_id',
-                    'owner_key' => 'id',
-                    'columns' => ['nama_kecamatan']
-                ],
-                // 🔥 NESTED RELATION
-                'kecamatan.kota' => [
-                    'model' => MasterKota::class,
-                    'foreign_key' => 'kota_id',
-                    'owner_key' => 'id',
-                    'columns' => ['nama_kota']
-                ]
-            ],
+            'foreign_keys' => [],
             'labels' => [
                 'id' => 'ID',
-                'nama_kelurahan' => 'Kelurahan',
-                'nama_kecamatan' => 'Kecamatan',
-                'nama_kota' => 'Kota',
+                'bahan_utama' => 'Bahan Utama',
             ],
-            'searchable' => ['nama_kelurahan', 'nama_kecamatan', 'nama_kota'],
-            'sortable' => ['id', 'nama_kelurahan', 'nama_kecamatan', 'nama_kota'],
-            'hidden' => ['kecamatan_id', 'created_at', 'updated_at'],
+            'searchable' => ['bahan_utama'],
+            'sortable' => ['id', 'bahan_utama'],
+            'hidden' => ['deleted_at', 'created_at', 'updated_at'],
         ];
     }
 
@@ -81,9 +76,7 @@ class MasterKelurahanController extends BaseApiController
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => 'required|string|max:10|unique:master_kelurahans',
-            'kecamatan_id' => 'required|string|max:6',
-            'nama_kelurahan' => 'required|string|max:100'
+            'name' => 'required|string|max:100'
         ]);
         if ($validator->fails()) {
             return $this->error(
@@ -94,11 +87,13 @@ class MasterKelurahanController extends BaseApiController
         }
 
         try {
-            $data = MasterKelurahan::create($validator->validated());
-            $data->load('kecamatan');
+            // $data = MasterProvinsi::create($validator->validated());
+            $data = MasterBahanUtama::create([
+                'bahan_utama' => strtoupper($validator->validated()['name'])
+            ]);
 
             return $this->success(
-                new MasterKelurahanResource($data),
+                $data,
                 'Data created successfully',
                 201
             );
@@ -114,7 +109,7 @@ class MasterKelurahanController extends BaseApiController
      */
     public function update(Request $request, $id)
     {
-        $data = MasterKelurahan::find($id);
+        $data = MasterBahanUtama::find($id);
 
         if (!$data) {
             return $this->error('Data not found', null, 404);
@@ -122,9 +117,7 @@ class MasterKelurahanController extends BaseApiController
 
         try {
             $validator = Validator::make($request->all(), [
-                'id' => 'required|string|max:10|unique:master_kelurahans,id,' . $id,
-                'kecamatan_id' => 'required|string|max:6',
-                'nama_kelurahan' => 'required|string|max:100'
+                'name' => 'required|string|max:100'
             ]);
 
             if ($validator->fails()) {
@@ -135,11 +128,13 @@ class MasterKelurahanController extends BaseApiController
                 );
             }
 
-            $data->update($validator->validated());
-            $data->load('kecamatan');
+            // $data->update($validator->validated());
+            $data->update([
+                'bahan_utama' => $validator->validated()['name']
+            ]);
 
             return $this->success(
-                new MasterKelurahanResource($data),
+                $data,
                 'Data updated successfully',
                 200
             );
@@ -159,7 +154,7 @@ class MasterKelurahanController extends BaseApiController
      */
     public function destroy(string $id)
     {
-        $data = MasterKelurahan::find($id);
+        $data = MasterBahanUtama::find($id);
 
         if (!$data) {
             return $this->error(
