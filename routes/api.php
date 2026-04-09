@@ -11,6 +11,7 @@ use App\Http\Controllers\MasterJenisKendaraanController;
 use App\Http\Controllers\MasterKecamatanController;
 use App\Http\Controllers\MasterKelasJalanController;
 use App\Http\Controllers\MasterKelurahanController;
+use App\Http\Controllers\MasterKonfigurasiSumbuController;
 use App\Http\Controllers\MasterKotaController;
 use App\Http\Controllers\MasterMerkController;
 use App\Http\Controllers\MasterMerkVarianController;
@@ -175,5 +176,9 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
             // STATUS PENERBITAN
             Route::get('/statuspenerbitan/counts', [MasterStatusPenerbitanController::class, 'counts']);
             Route::apiResource('statuspenerbitan', MasterStatusPenerbitanController::class);
+
+            // KONFIGURASI SUMBU
+            Route::get('/konfigurasiumbu/counts', [MasterKonfigurasiSumbuController::class, 'counts']);
+            Route::apiResource('konfigurasiumbu', MasterKonfigurasiSumbuController::class);
         });
 });
