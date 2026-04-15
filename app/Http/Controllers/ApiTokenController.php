@@ -37,14 +37,6 @@ class ApiTokenController extends Controller
     // }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -59,7 +51,7 @@ class ApiTokenController extends Controller
             'name'    => $validated['name'],
             'url_api' => $validated['urlApi'],
             'token'   => $validated['token'],
-            'is_active' => true
+            'is_active' => false
         ];
 
         $apiToken = ApiToken::create($data);
@@ -69,14 +61,6 @@ class ApiTokenController extends Controller
             'message' => 'API Token created successfully',
             'data' => new ApiKeyResource($apiToken)
         ]);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
     }
 
     /**
@@ -132,18 +116,48 @@ class ApiTokenController extends Controller
             'is_active' => 'required|boolean',
         ]);
 
-        // ✅ Ambil data
-        $apiToken = ApiToken::findOrFail($validated['id']);
+        return DB::transaction(function () use ($validated) {
 
-        // ✅ Update
-        $apiToken->is_active = $validated['is_active'];
-        $apiToken->save();
+            $apiToken = ApiToken::findOrFail($validated['id']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'API Token status updated successfully',
-            'data' => $apiToken
-        ]);
+            // 🔥 CASE 1: Aktifkan token ini
+            if ($validated['is_active']) {
+
+                // nonaktifkan semua
+                ApiToken::where('is_active', true)->update([
+                    'is_active' => false
+                ]);
+
+                // aktifkan yang dipilih
+                $apiToken->update([
+                    'is_active' => true
+                ]);
+            }
+
+            // 🔥 CASE 2: Nonaktifkan token ini
+            else {
+
+                // cek apakah ini satu-satunya yang aktif
+                $activeCount = ApiToken::where('is_active', true)->count();
+
+                if ($activeCount <= 1 && $apiToken->is_active) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Minimal harus ada 1 API Token yang aktif'
+                    ], 422);
+                }
+
+                $apiToken->update([
+                    'is_active' => false
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'API Token status updated successfully',
+                'data' => $apiToken
+            ]);
+        });
     }
 
     /**
