@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class MasterKonfigurasiSumbu extends Model
 {
     use SoftDeletes;
+
     protected $table = 'master_konfigurasi_sumbus';
     protected $fillable = [
         'name'
@@ -15,6 +16,6 @@ class MasterKonfigurasiSumbu extends Model
 
     public function kendaraan()
     {
-        return $this->hasMany(MKendaraan::class, 'master_konfigurasi_sumbu_id');
+        return $this->hasMany(MKendaraan::class, 'konfigurasi_sumbu_id', 'id');
     }
 }

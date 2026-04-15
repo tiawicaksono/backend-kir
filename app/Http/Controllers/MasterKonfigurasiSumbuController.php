@@ -51,13 +51,12 @@ class MasterKonfigurasiSumbuController extends BaseApiController
     {
         return [
             'primary_key' => 'id',
-            'foreign_keys' => [],
+            'only_fields' => ['name'],
             'labels' => [
                 'name' => 'Konfigurasi Sumbu',
             ],
             'searchable' => ['name'],
             'sortable' => ['name'],
-            'hidden' => ['id', 'created_at', 'updated_at'],
         ];
     }
 

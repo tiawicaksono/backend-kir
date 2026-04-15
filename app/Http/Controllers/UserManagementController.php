@@ -72,7 +72,6 @@ class UserManagementController extends Controller
     {
         return [
             'primary_key' => 'id',
-            'foreign_keys' => [],
             'labels' => [],
             'searchable' => ['name', 'email'],
             'sortable' => ['name', 'email'],
