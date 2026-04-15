@@ -20,4 +20,9 @@ class MasterKelasJalan extends Model
         'vehicle_height',
         'vehicle_width'
     ];
+
+    public function kendaraans()
+    {
+        return $this->hasMany(MKendaraan::class, 'kelas_jalan_id', 'kelasjalan_id');
+    }
 }

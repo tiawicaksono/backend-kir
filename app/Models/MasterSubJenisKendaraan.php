@@ -22,4 +22,9 @@ class MasterSubJenisKendaraan extends Model
     {
         return $this->belongsTo(MasterJenisKendaraan::class, 'vehicle_type_id', 'vehicle_type_id');
     }
+
+    public function kendaraans()
+    {
+        return $this->hasMany(MKendaraan::class, 'sub_jenis_kendaraan_id', 'vehicle_sub_id');
+    }
 }

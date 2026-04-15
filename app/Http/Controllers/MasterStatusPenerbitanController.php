@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FlattenHelper;
-use App\Http\Resources\TrnSinkronResource;
 use App\Models\MasterStatusPenerbitan;
-use App\Models\TrnSinkron;
 use App\Services\KemenhubService;
 use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
@@ -22,87 +20,39 @@ class MasterStatusPenerbitanController extends BaseApiController
         ]);
     }
 
-    /**
-     * Sinkronisasi status penerbitan dari external dan simpan ke database
-     */
-    protected $kemenhubService;
-
-    public function __construct(KemenhubService $kemenhubService)
+    public function sync(Request $request, KemenhubService $kemenhubService)
     {
-        $this->kemenhubService = $kemenhubService;
-    }
-
-    public function sync(Request $request)
-    {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'api_integration_id' => 'required|integer',
             'name' => 'required|string|max:255',
-            'prefix' => 'required|string|max:255',
-            'url_api' => 'required|url',
-            'token'   => 'required|string'
+            'prefix' => 'required|string|max:255'
         ]);
 
-        $api_integration_id = $validated['api_integration_id'];
-        $name = $validated['name'];
-        $prefix = $validated['prefix'];
-        $url_api = $validated['url_api'];
-        $token = $validated['token'];
-        $transaction = null;
-        try {
-            $result = $this->kemenhubService->getDataSync(
-                $url_api,
-                $token,
-                $prefix
+        if ($validator->fails()) {
+            return $this->error(
+                'Validation error',
+                $validator->errors(),
+                422
             );
-
-            DB::transaction(function () use ($result, $api_integration_id, $prefix, $name, $url_api, $token, &$transaction) {
-
-                foreach ($result['data'] ?? [] as $item) {
-                    // throw new \Exception("Test error");
-                    MasterStatusPenerbitan::updateOrCreate(
-                        ['issuance_id' => $item['issuance_id']],
-                        [
-                            'issuance_code' => $item['issuance_code'],
-                            'issuance_name' => $item['issuance_name'],
-                            'issuance_desc' => $item['issuance_desc']
-                        ]
-                    );
-                }
-
-                // history sukses
-                $transaction = TrnSinkron::create([
-                    'api_integration_id' => $api_integration_id,
-                    'name' => $name,
-                    'prefix' => $prefix,
-                    'url_api' => $url_api,
-                    'token' => $token,
-                    'status' => true,
-                    'keterangan' => 'Sinkronisasi berhasil',
-                ]);
-            });
-
-            return response()->json([
-                'message' => 'Sinkronisasi berhasil',
-                'transaction' => new TrnSinkronResource($transaction)
-            ]);
-        } catch (\Exception $e) {
-
-            // history gagal
-            $transaction = TrnSinkron::create([
-                'api_integration_id' => $api_integration_id,
-                'name' => $name,
-                'prefix' => $prefix,
-                'url_api' => $url_api,
-                'token' => $token,
-                'status' => false,
-                'keterangan' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'message' => $e->getMessage(),
-                'transaction' => new TrnSinkronResource($transaction)
-            ], 500);
         }
+
+        $payload = $validator->validated();
+
+        $transaction = $kemenhubService->sync($payload, function ($item) {
+            MasterStatusPenerbitan::updateOrCreate(
+                ['issuance_id' => $item['issuance_id']],
+                [
+                    'issuance_code' => $item['issuance_code'],
+                    'issuance_name' => $item['issuance_name'],
+                    'issuance_desc' => $item['issuance_desc']
+                ]
+            );
+        });
+
+        return response()->json(
+            $transaction,
+            $transaction['success'] ? 200 : 500
+        );
     }
 
     /**
@@ -138,7 +88,6 @@ class MasterStatusPenerbitanController extends BaseApiController
     {
         return [
             'primary_key' => 'issuance_id',
-            'foreign_keys' => [],
             'labels' => [
                 'issuance_id' => 'ID',
                 'issuance_name' => 'Status Penerbitan'

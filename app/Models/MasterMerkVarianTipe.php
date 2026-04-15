@@ -22,4 +22,9 @@ class MasterMerkVarianTipe extends Model
     {
         return $this->belongsTo(MasterMerkVarian::class, 'vehicle_varian_type_id', 'vehicle_varian_type_id');
     }
+
+    public function kendaraans()
+    {
+        return $this->hasMany(MKendaraan::class, 'tipe_varian_merk_id', 'vehicle_varian_id');
+    }
 }

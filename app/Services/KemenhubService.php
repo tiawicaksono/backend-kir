@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\ApiToken;
+use App\Models\TrnSinkron;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class KemenhubService
@@ -26,5 +29,72 @@ class KemenhubService
         }
 
         return $response->json();
+    }
+
+    public function sync($payload, callable $handler)
+    {
+        $apiToken = ApiToken::where('is_active', true)->first();
+
+        if (!$apiToken) {
+            return [
+                'success' => false,
+                'message' => 'Api Token tidak ditemukan atau tidak aktif',
+                'transaction' => null
+            ];
+        }
+
+        $url_api = $apiToken->url_api;
+        $token   = $apiToken->token;
+
+        try {
+            $result = $this->getDataSync(
+                $url_api,
+                $token,
+                $payload['prefix']
+            );
+
+            DB::beginTransaction();
+
+            foreach ($result['data'] ?? [] as $item) {
+                $handler($item); // 🔥 selalu 1 item
+            }
+
+            $transaction = TrnSinkron::create([
+                'api_integration_id' => $payload['api_integration_id'],
+                'name' => $payload['name'],
+                'prefix' => $payload['prefix'],
+                'url_api' => $url_api,
+                'token' => $token,
+                'status' => true,
+                'keterangan' => 'Sinkronisasi berhasil',
+            ]);
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Sinkronisasi berhasil',
+                'transaction' => $transaction
+            ];
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            $transaction = TrnSinkron::create([
+                'api_integration_id' => $payload['api_integration_id'],
+                'name' => $payload['name'],
+                'prefix' => $payload['prefix'],
+                'url_api' => $url_api,
+                'token' => $token,
+                'status' => false,
+                'keterangan' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'transaction' => $transaction
+            ];
+        }
     }
 }

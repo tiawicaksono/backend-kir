@@ -21,4 +21,9 @@ class MasterJenisKendaraan extends Model
     {
         return $this->hasMany(MasterSubJenisKendaraan::class, 'vehicle_type_id', 'vehicle_type_id');
     }
+
+    public function kendaraans()
+    {
+        return $this->hasMany(MKendaraan::class, 'jenis_kendaraan_id', 'vehicle_type_id');
+    }
 }

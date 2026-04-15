@@ -2,113 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\TrnSinkronResource;
 use App\Models\MasterSubJenisKendaraan;
-use App\Models\TrnSinkron;
 use App\Services\KemenhubService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
-class MasterSubJenisKendaraanController extends Controller
+class MasterSubJenisKendaraanController extends BaseApiController
 {
-    /**
-     * Sinkronisasi status penerbitan dari external dan simpan ke database
-     */
-    protected $kemenhubService;
-
-    public function __construct(KemenhubService $kemenhubService)
+    public function counts()
     {
-        $this->kemenhubService = $kemenhubService;
+        return response()->json([
+            'countData' => MasterSubJenisKendaraan::count(),
+        ]);
     }
 
-    public function sync(Request $request)
+    public function sync(Request $request, KemenhubService $kemenhubService)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'api_integration_id' => 'required|integer',
             'name' => 'required|string|max:255',
-            'prefix' => 'required|string|max:255',
-            'url_api' => 'required|url',
-            'token'   => 'required|string'
+            'prefix' => 'required|string|max:255'
         ]);
 
-        $api_integration_id = $validated['api_integration_id'];
-        $name = $validated['name'];
-        $prefix = $validated['prefix'];
-        $url_api = $validated['url_api'];
-        $token = $validated['token'];
-        $transaction = null;
-
-        try {
-            $result = $this->kemenhubService->getDataSync(
-                $url_api,
-                $token,
-                $prefix
+        if ($validator->fails()) {
+            return $this->error(
+                'Validation error',
+                $validator->errors(),
+                422
             );
+        }
 
-            DB::transaction(function () use ($result, $api_integration_id, $prefix, $name, $url_api, $token, &$transaction) {
+        $payload = $validator->validated();
+        $buffer = [];
+        $parentIds = DB::table('master_jenis_kendaraans')
+            ->pluck('vehicle_type_id')
+            ->flip();
+        $transaction = $kemenhubService->sync($payload, function ($item) use (&$buffer, $parentIds) {
 
-                // ambil semua parent id yang ada
-                $parentIds = DB::table('master_jenis_kendaraans')
-                    ->pluck('vehicle_type_id')
-                    ->toArray();
+            if (!isset($parentIds[$item['vehicle_type_id']])) {
+                return;
+            }
 
-                foreach ($result['data'] ?? [] as $item) {
+            $buffer[] = [
+                'vehicle_sub_id'   => $item['vehicle_sub_id'],
+                'vehicle_type_id' => $item['vehicle_type_id'],
+                'vehicle_sub_code' => $item['vehicle_sub_code'],
+                'vehicle_sub_name' => $item['vehicle_sub_name'],
+                'vehicle_sub_desc' => $item['vehicle_sub_desc'],
+            ];
 
-                    // jika parent tidak ada → skip
-                    if (!in_array($item['vehicle_type_id'], $parentIds)) {
-                        continue;
-                    }
-
-                    $data[] = [
-                        'vehicle_sub_id' => $item['vehicle_sub_id'],
-                        'vehicle_type_id'   => $item['vehicle_type_id'],
-                        'vehicle_sub_code' => $item['vehicle_sub_code'],
-                        'vehicle_sub_name' => $item['vehicle_sub_name'],
-                        'vehicle_sub_desc' => $item['vehicle_sub_desc'],
-                    ];
-                }
-
+            // flush per 1000
+            if (count($buffer) >= 1000) {
                 MasterSubJenisKendaraan::upsert(
-                    $data,
+                    $buffer,
                     ['vehicle_sub_id'],
-                    ['vehicle_type_id', 'vehicle_sub_code', 'vehicle_sub_name', 'vehicle_sub_desc']
+                    [
+                        'vehicle_type_id',
+                        'vehicle_sub_code',
+                        'vehicle_sub_name',
+                        'vehicle_sub_desc'
+                    ]
                 );
 
-                // history sukses
-                $transaction = TrnSinkron::create([
-                    'api_integration_id' => $api_integration_id,
-                    'name' => $name,
-                    'prefix' => $prefix,
-                    'url_api' => $url_api,
-                    'token' => $token,
-                    'status' => true,
-                    'keterangan' => 'Sinkronisasi berhasil'
-                ]);
-            });
+                $buffer = [];
+            }
+        });
 
-            return response()->json([
-                'message' => 'Sinkronisasi berhasil',
-                'transaction' => new TrnSinkronResource($transaction)
-            ]);
-        } catch (\Exception $e) {
-
-            // history gagal
-            $transaction = TrnSinkron::create([
-                'api_integration_id' => $api_integration_id,
-                'name' => $name,
-                'prefix' => $prefix,
-                'url_api' => $url_api,
-                'token' => $token,
-                'status' => false,
-                'keterangan' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'message'   => $e->getMessage(),
-                'transaction' => new TrnSinkronResource($transaction)
-            ], 500);
+        // 🔥 flush sisa
+        if (!empty($buffer)) {
+            MasterSubJenisKendaraan::upsert(
+                $buffer,
+                ['vehicle_sub_id'],
+                [
+                    'vehicle_type_id',
+                    'vehicle_sub_code',
+                    'vehicle_sub_name',
+                    'vehicle_sub_desc'
+                ]
+            );
         }
+
+        return response()->json(
+            $transaction,
+            $transaction['success'] ? 200 : 500
+        );
     }
+
 
     /**
      * Display a listing of the resource.

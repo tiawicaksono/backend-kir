@@ -16,14 +16,16 @@ class TrnSinkronResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'apiIntegrationId' => $this->api_integration_id,
+            // 'apiIntegrationId' => $this->api_integration_id,
+            'api_integration_id' => $this->api_integration_id,
             'name' => $this->name,
             'urlApi' => $this->url_api,
             'token' => $this->token,
             'prefix' => $this->prefix,
             'status' => (bool) $this->status,
             'keterangan' => $this->keterangan,
-            'createdAt' => $this->created_at
+            // 'createdAt' => $this->created_at
+            'created_at' => $this->created_at
         ];
     }
 }

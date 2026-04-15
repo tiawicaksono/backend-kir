@@ -21,4 +21,9 @@ class MasterMerk extends Model
     {
         return $this->hasMany(MasterMerkVarian::class, 'vehicle_brand_id', 'vehicle_brand_id');
     }
+
+    public function kendaraans()
+    {
+        return $this->hasMany(MKendaraan::class, 'merk_id', 'vehicle_brand_id');
+    }
 }
