@@ -20,7 +20,7 @@ class MasterKelurahanController extends BaseApiController
     public function index(Request $request)
     {
         $model = MasterKelurahan::class;
-        $query = $model::with('kecamatan.kota');
+        $query = $model::with('kecamatan', 'kecamatan.kota', 'kecamatan.kota.provinsi');
 
         $config = $this->getTableConfig();
 
@@ -47,29 +47,32 @@ class MasterKelurahanController extends BaseApiController
     {
         return [
             'primary_key' => 'id',
-            'foreign_keys' => ['kecamatan_id'],
-            'relations' => [
+            'only' => [
                 'kecamatan' => [
-                    'model' => MasterKecamatan::class,
-                    'foreign_key' => 'kecamatan_id',
-                    'owner_key' => 'id',
-                    'columns' => ['nama_kecamatan']
+                    'only' => ['nama_kecamatan'],
+                    'alias' => ['nama_kecamatan' => 'nama_kecamatan'],
+                    'children' => [
+                        'kota' => [
+                            'only' => ['nama_kota'],
+                            'alias' => ['nama_kota' => 'nama_kota'],
+                            'children' => [
+                                'provinsi' => [
+                                    'only' => ['nama_provinsi'],
+                                    'alias' => ['nama_provinsi' => 'nama_provinsi']
+                                ]
+                            ]
+                        ]
+                    ]
                 ],
-                // 🔥 NESTED RELATION
-                'kecamatan.kota' => [
-                    'model' => MasterKota::class,
-                    'foreign_key' => 'kota_id',
-                    'owner_key' => 'id',
-                    'columns' => ['nama_kota']
-                ]
             ],
             'labels' => [
                 'id' => 'ID',
                 'nama_kelurahan' => 'Kelurahan',
                 'nama_kecamatan' => 'Kecamatan',
                 'nama_kota' => 'Kota',
+                'nama_provinsi' => 'Provinsi',
             ],
-            'searchable' => ['nama_kelurahan', 'nama_kecamatan', 'nama_kota'],
+            'searchable' => ['nama_kelurahan', 'kecamatan.nama_kecamatan', 'kecamatan.kota.nama_kota', 'kecamatan.kota.provinsi.nama_provinsi'],
             'sortable' => ['id', 'nama_kelurahan', 'nama_kecamatan', 'nama_kota'],
             'hidden' => ['kecamatan_id', 'created_at', 'updated_at'],
         ];

@@ -56,7 +56,6 @@ class MasterProvinsiController extends BaseApiController
     {
         return [
             'primary_key' => 'id',
-            'foreign_keys' => [],
             'labels' => [
                 'id' => 'ID',
                 'nama_provinsi' => 'Provinsi',

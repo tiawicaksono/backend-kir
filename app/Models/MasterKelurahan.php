@@ -21,4 +21,9 @@ class MasterKelurahan extends Model
     {
         return $this->belongsTo(MasterKecamatan::class, 'kecamatan_id', 'id');
     }
+
+    public function kendaraans()
+    {
+        return $this->hasMany(MKendaraan::class, 'kelurahan_id', 'id');
+    }
 }

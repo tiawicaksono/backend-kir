@@ -15,4 +15,9 @@ class MasterBahanBakar extends Model
         'fuel_name',
         'fuel_desc',
     ];
+
+    public function kendaraans()
+    {
+        return $this->hasMany(MKendaraan::class, 'bahan_bakar_id', 'fuel_id');
+    }
 }

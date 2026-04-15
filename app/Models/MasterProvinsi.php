@@ -20,4 +20,9 @@ class MasterProvinsi extends Model
     {
         return $this->hasMany(MasterKota::class, 'provinsi_id', 'id');
     }
+
+    public function kendaraans()
+    {
+        return $this->hasMany(MKendaraan::class, 'provinsi_id', 'id');
+    }
 }

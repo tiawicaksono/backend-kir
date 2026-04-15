@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Helpers\FlattenHelper;
 use App\Http\Resources\MasterKecamatanResource;
 use App\Models\MasterKecamatan;
-use App\Models\MasterKota;
 use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +18,7 @@ class MasterKecamatanController extends BaseApiController
     public function index(Request $request)
     {
         $model = MasterKecamatan::class;
-        $query = $model::with('kota');
+        $query = $model::with('kota', 'kota.provinsi');
 
         $config = $this->getTableConfig();
 
@@ -46,22 +45,26 @@ class MasterKecamatanController extends BaseApiController
     {
         return [
             'primary_key' => 'id',
-            'foreign_keys' => ['kota_id'],
-            'relations' => [
+            'only' => [
                 'kota' => [
-                    'model' => MasterKota::class,
-                    'foreign_key' => 'kota_id',
-                    'owner_key' => 'id',
-                    'columns' => ['nama_kota']
+                    'only' => ['nama_kota'],
+                    'alias' => ['nama_kota' => 'nama_kota'],
+                    'children' => [
+                        'provinsi' => [
+                            'only' => ['nama_provinsi'],
+                            'alias' => ['nama_provinsi' => 'nama_provinsi']
+                        ]
+                    ]
                 ]
             ],
             'labels' => [
                 'id' => 'ID',
                 'nama_kecamatan' => 'Kecamatan',
                 'nama_kota' => 'Kota',
+                'nama_provinsi' => 'Provinsi',
             ],
-            'searchable' => ['nama_kecamatan', 'nama_kota'],
-            'sortable' => ['id', 'nama_kecamatan', 'nama_kota'],
+            'searchable' => ['nama_kecamatan', 'kota.nama_kota', 'kota.provinsi.nama_provinsi'],
+            'sortable' => ['id', 'nama_kecamatan', 'nama_kota', 'nama_provinsi'],
             'hidden' => ['kota_id', 'created_at', 'updated_at'],
         ];
     }

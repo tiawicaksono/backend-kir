@@ -59,7 +59,6 @@ class MasterBahanUtamaController extends BaseApiController
     {
         return [
             'primary_key' => 'id',
-            'foreign_keys' => [],
             'labels' => [
                 'id' => 'ID',
                 'bahan_utama' => 'Bahan Utama',
