@@ -51,8 +51,9 @@ class MasterKonfigurasiSumbuController extends BaseApiController
     {
         return [
             'primary_key' => 'id',
-            'only_fields' => ['name'],
+            'only_fields' => ['id', 'name'],
             'labels' => [
+                'id' => 'ID',
                 'name' => 'Konfigurasi Sumbu',
             ],
             'searchable' => ['name'],
@@ -171,5 +172,21 @@ class MasterKonfigurasiSumbuController extends BaseApiController
                 500
             );
         }
+    }
+
+    /**
+     * Get options for select input
+     */
+    public function options()
+    {
+        $data = MasterKonfigurasiSumbu::select('id', 'name')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->name,
+                'value' => $item->id,
+            ]);
+
+        return response()->json($data);
     }
 }

@@ -67,10 +67,18 @@ class MasterKelasJalanController extends BaseApiController
     }
 
     /**
-     * Display the specified resource.
+     * Get options for select input
      */
-    public function show(MasterKelasJalan $masterKelasJalan)
+    public function options()
     {
-        return response()->json($masterKelasJalan);
+        $data = MasterKelasJalan::select('kelasjalan_id', 'kelasjalan_name')
+            ->orderBy('kelasjalan_name')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->kelasjalan_name,
+                'value' => $item->kelasjalan_id,
+            ]);
+
+        return response()->json($data);
     }
 }

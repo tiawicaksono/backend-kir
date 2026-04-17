@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiCekDataController;
 use App\Http\Controllers\ApiIntegrationController;
 use App\Http\Controllers\ApiTokenController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,7 @@ use App\Http\Controllers\MasterProvinsiController;
 use App\Http\Controllers\MasterStatusPenerbitanController;
 use App\Http\Controllers\MasterSubJenisKendaraanController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\MKendaraanController;
 use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\UserManagementController;
 
@@ -112,6 +114,11 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::get('/{masterSubJenisKendaraan}', [MasterSubJenisKendaraanController::class, 'show']);
         Route::post('/sync', [MasterSubJenisKendaraanController::class, 'sync']);
     });
+    /**
+     * ===============================
+     * END Sinkron Kemenhub
+     * ===============================
+     */
 
     // Loket
     Route::prefix('loket')->group(function () {
@@ -119,15 +126,49 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::post('/pembayaran', fn() => response()->json(['message' => 'Create Pembayaran OK']));
     });
 
-    // Master
+    /**
+     * MASTER DATA
+     */
     Route::prefix('master')->group(function () {
-        Route::get('/rolling-alat', fn() => response()->json(['message' => 'Rolling Alat OK']));
-        Route::post('/rolling-alat', fn() => response()->json(['message' => 'Create Rolling Alat OK']));
-        Route::put('/rolling-alat/{id}', fn() => response()->json(['message' => 'Update Rolling Alat OK']));
-        Route::delete('/rolling-alat/{id}', fn() => response()->json(['message' => 'Delete Rolling Alat OK']));
-    });
+        // KENDARAAN
+        Route::get('/kendaraan/counts', [MKendaraanController::class, 'counts']);
+        Route::apiResource('kendaraan', MKendaraanController::class);
 
-    Route::prefix('pengaturan')->group(function () {
+
+        // SELECT OPTIONS WILAYAH
+        Route::get('/provinsi/options', [MasterProvinsiController::class, 'options']);
+        Route::get('/kota/options', [MasterKotaController::class, 'options']);
+        Route::get('/kecamatan/options', [MasterKecamatanController::class, 'options']);
+        Route::get('/kelurahan/options', [MasterKelurahanController::class, 'options']);
+
+        // SELECT OPTIONS MERK
+        Route::get('/merk/options', [MasterMerkController::class, 'options']);
+        Route::get('/variantype/options', [MasterMerkVarianController::class, 'options']);
+        Route::get('/varian/options', [MasterMerkVarianTipeController::class, 'options']);
+
+        // SELECT OPTIONS JENIS KENDARAAN
+        Route::get('/vehicletype/options', [MasterJenisKendaraanController::class, 'options']);
+        Route::get('/subvehicletype/options', [MasterSubJenisKendaraanController::class, 'options']);
+
+        // SELECT OPTIONS BAHAN UTAMA
+        Route::get('/bahanutama/options', [MasterBahanUtamaController::class, 'options']);
+
+        // SELECT OPTIONS KONFIGURASI SUMBU
+        Route::get('/konfigurasiumbu/options', [MasterKonfigurasiSumbuController::class, 'options']);
+
+        // SELECT OPTIONS KELAS JALAN
+        Route::get('/kelasjalan/options', [MasterKelasJalanController::class, 'options']);
+    });
+    /**
+     * ===============================
+     * END MASTER DATA
+     * ===============================
+     */
+
+    /**
+     * KEMENTRIAN
+     */
+    Route::prefix('kementrian')->group(function () {
         // API KEYS
         Route::get('/api-keys', [ApiTokenController::class, 'index']);
         Route::post('/api-keys/create', [ApiTokenController::class, 'store']);
@@ -138,10 +179,29 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         // API INTEGRATIONS
         Route::get('/api-integrations', [ApiIntegrationController::class, 'index']);
         Route::get('/api-integrations/detail/{prefix}', [ApiIntegrationController::class, 'show']);
-    });
 
-    // Pengaturan
-    // ❗ KHUSUS ADMIN
+        // API CEK DATA
+        Route::post('/api-cek-data', [ApiCekDataController::class, 'index']);
+    });
+    /**
+     * ===============================
+     * END KEMENTRIAN
+     * ===============================
+     */
+
+    /**
+     * PENGATURAN
+     */
+    Route::prefix('pengaturan')->group(function () {
+        // ROLLING ALAT
+        Route::get('/rolling-alat', fn() => response()->json(['message' => 'Rolling Alat OK']));
+        Route::post('/rolling-alat', fn() => response()->json(['message' => 'Create Rolling Alat OK']));
+        Route::put('/rolling-alat/{id}', fn() => response()->json(['message' => 'Update Rolling Alat OK']));
+        Route::delete('/rolling-alat/{id}', fn() => response()->json(['message' => 'Delete Rolling Alat OK']));
+    });
+    /**
+     * PENGATURAN KHUSUS ADMIN
+     */
     Route::prefix('pengaturan')
         ->middleware('check.role:1')
         ->group(function () {
@@ -181,4 +241,9 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
             Route::get('/konfigurasiumbu/counts', [MasterKonfigurasiSumbuController::class, 'counts']);
             Route::apiResource('konfigurasiumbu', MasterKonfigurasiSumbuController::class);
         });
+    /**
+     * ===============================
+     * END PENGATURAN
+     * ===============================
+     */
 });

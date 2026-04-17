@@ -46,7 +46,6 @@ class RoleManagementController extends Controller
     {
         return [
             'primary_key' => 'id',
-            'foreign_keys' => [],
             'labels' => [],
             'searchable' => ['name'],
             'sortable' => ['name'],

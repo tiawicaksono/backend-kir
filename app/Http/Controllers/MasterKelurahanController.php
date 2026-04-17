@@ -190,4 +190,27 @@ class MasterKelurahanController extends BaseApiController
             );
         }
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options(Request $request)
+    {
+        $query = MasterKelurahan::query();
+
+        if ($request->kecamatan_id) {
+            $query->where('kecamatan_id', $request->kecamatan_id);
+        }
+
+        $data = $query
+            ->select('id', 'nama_kelurahan')
+            ->orderBy('nama_kelurahan')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->nama_kelurahan,
+                'value' => $item->id,
+            ]);
+
+        return response()->json($data);
+    }
 }

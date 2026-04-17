@@ -109,4 +109,24 @@ class MasterMerkVarianTipeController extends BaseApiController
         return MasterMerkVarianTipe::with('varian.merk')
             ->findOrFail($masterMerkVarianTipe);
     }
+
+    public function options(Request $request)
+    {
+        $query = MasterMerkVarianTipe::query();
+
+        if ($request->vehicle_varian_type_id) {
+            $query->where('vehicle_varian_type_id', $request->vehicle_varian_type_id);
+        }
+
+        $data = $query
+            ->select('vehicle_varian_id', 'vehicle_varian_name')
+            ->orderBy('vehicle_varian_name')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->vehicle_varian_name,
+                'value' => $item->vehicle_varian_id,
+            ]);
+
+        return response()->json($data);
+    }
 }

@@ -25,7 +25,7 @@ return new class extends Migration
             $table->date('tanggal_stnk')->nullable();
             $table->string('tahun_kendaraan')->nullable();
             $table->string('no_uji')->unique();
-            $table->string('no_kendaraan');
+            $table->string('no_kendaraan')->nullable();
             $table->string('identitas')->nullable();
             $table->string('no_identitas')->nullable();
             $table->string('nama_pemilik');
@@ -69,10 +69,10 @@ return new class extends Migration
             $table->foreignId('bahan_utama_id')
                 ->constrained('master_bahan_utamas')
                 ->restrictOnDelete();
-            $table->string('jenis_bahan_utama');
             $table->integer('jumlah_duduk')->default(0);
             $table->integer('jumlah_berdiri')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

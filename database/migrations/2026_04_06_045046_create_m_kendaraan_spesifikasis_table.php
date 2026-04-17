@@ -70,6 +70,7 @@ return new class extends Migration
             $table->integer('berat_jenis_muatan')->unsigned()->default(0);
             $table->integer('volume_muatan')->unsigned()->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

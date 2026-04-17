@@ -175,4 +175,27 @@ class MasterKotaController extends BaseApiController
             );
         }
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options(Request $request)
+    {
+        $query = MasterKota::query();
+
+        if ($request->provinsi_id) {
+            $query->where('provinsi_id', $request->provinsi_id);
+        }
+
+        $data = $query
+            ->select('id', 'nama_kota')
+            ->orderBy('nama_kota')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->nama_kota,
+                'value' => $item->id,
+            ]);
+
+        return response()->json($data);
+    }
 }

@@ -182,4 +182,20 @@ class MasterProvinsiController extends BaseApiController
             );
         }
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options()
+    {
+        $data = MasterProvinsi::select('id', 'nama_provinsi')
+            ->orderBy('nama_provinsi')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->nama_provinsi,
+                'value' => $item->id,
+            ]);
+
+        return response()->json($data);
+    }
 }

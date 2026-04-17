@@ -181,4 +181,27 @@ class MasterKecamatanController extends BaseApiController
             );
         }
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options(Request $request)
+    {
+        $query = MasterKecamatan::query();
+
+        if ($request->kota_id) {
+            $query->where('kota_id', $request->kota_id);
+        }
+
+        $data = $query
+            ->select('id', 'nama_kecamatan')
+            ->orderBy('nama_kecamatan')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->nama_kecamatan,
+                'value' => $item->id,
+            ]);
+
+        return response()->json($data);
+    }
 }

@@ -68,4 +68,20 @@ class MasterJenisKendaraanController extends BaseApiController
         return MasterJenisKendaraan::with('masterSubJenisKendaraans')
             ->findOrFail($masterJenisKendaraan);
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options()
+    {
+        $data = MasterJenisKendaraan::select('vehicle_type_id', 'vehicle_type_name')
+            ->orderBy('vehicle_type_name')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->vehicle_type_name,
+                'value' => $item->vehicle_type_id,
+            ]);
+
+        return response()->json($data);
+    }
 }

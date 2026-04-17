@@ -181,4 +181,20 @@ class MasterBahanUtamaController extends BaseApiController
             );
         }
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options()
+    {
+        $data = MasterBahanUtama::select('id', 'bahan_utama')
+            ->orderBy('bahan_utama')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->bahan_utama,
+                'value' => $item->id,
+            ]);
+
+        return response()->json($data);
+    }
 }

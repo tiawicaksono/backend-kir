@@ -110,4 +110,24 @@ class MasterSubJenisKendaraanController extends BaseApiController
         return MasterSubJenisKendaraan::with('masterJenisKendaraan')
             ->findOrFail($masterSubJenisKendaraan);
     }
+
+    public function options(Request $request)
+    {
+        $query = MasterSubJenisKendaraan::query();
+
+        if ($request->vehicle_type_id) {
+            $query->where('vehicle_type_id', $request->vehicle_type_id);
+        }
+
+        $data = $query
+            ->select('vehicle_sub_id', 'vehicle_sub_name')
+            ->orderBy('vehicle_sub_name')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->vehicle_sub_name,
+                'value' => $item->vehicle_sub_id,
+            ]);
+
+        return response()->json($data);
+    }
 }

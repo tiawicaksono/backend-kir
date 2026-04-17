@@ -68,4 +68,20 @@ class MasterMerkController extends BaseApiController
         return MasterMerk::with('varians.variantipes')
             ->findOrFail($masterMerk);
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options()
+    {
+        $data = MasterMerk::select('vehicle_brand_id', 'vehicle_brand_name')
+            ->orderBy('vehicle_brand_name')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->vehicle_brand_name,
+                'value' => $item->vehicle_brand_id,
+            ]);
+
+        return response()->json($data);
+    }
 }
