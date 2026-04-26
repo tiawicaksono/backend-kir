@@ -143,18 +143,21 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
 
         // SELECT OPTIONS MERK
         Route::get('/merk/options', [MasterMerkController::class, 'options']);
-        Route::get('/variantype/options', [MasterMerkVarianController::class, 'options']);
-        Route::get('/varian/options', [MasterMerkVarianTipeController::class, 'options']);
+        Route::get('/varianmerk/options', [MasterMerkVarianController::class, 'options']);
+        Route::get('/tipevarianmerk/options', [MasterMerkVarianTipeController::class, 'options']);
 
         // SELECT OPTIONS JENIS KENDARAAN
         Route::get('/vehicletype/options', [MasterJenisKendaraanController::class, 'options']);
         Route::get('/subvehicletype/options', [MasterSubJenisKendaraanController::class, 'options']);
 
+        // SELECT OPTIONS BAHAN BAKAR
+        Route::get('/bahanbakar/options', [MasterBahanBakarController::class, 'options']);
+
         // SELECT OPTIONS BAHAN UTAMA
         Route::get('/bahanutama/options', [MasterBahanUtamaController::class, 'options']);
 
         // SELECT OPTIONS KONFIGURASI SUMBU
-        Route::get('/konfigurasiumbu/options', [MasterKonfigurasiSumbuController::class, 'options']);
+        Route::get('/konfigurasisumbu/options', [MasterKonfigurasiSumbuController::class, 'options']);
 
         // SELECT OPTIONS KELAS JALAN
         Route::get('/kelasjalan/options', [MasterKelasJalanController::class, 'options']);

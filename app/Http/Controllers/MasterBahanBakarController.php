@@ -66,4 +66,20 @@ class MasterBahanBakarController extends BaseApiController
     {
         return response()->json($masterBahanBakar);
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options()
+    {
+        $data = MasterBahanBakar::select('fuel_id', 'fuel_name')
+            ->orderBy('fuel_id')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->fuel_name,
+                'value' => $item->fuel_id,
+            ]);
+
+        return response()->json($data);
+    }
 }

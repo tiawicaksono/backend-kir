@@ -31,6 +31,16 @@ class MKendaraanController extends BaseApiController
 
         $config = $this->getListConfig();
 
+        // 🔥 DEFAULT SORT PER MODULE
+        $primaryKey = $config['primary_key'] ?? null;
+
+        if (!$request->filled('sort_by') && $primaryKey) {
+            $request->merge([
+                'sort_by' => $primaryKey,
+                'sort_order' => 'desc',
+            ]);
+        }
+
         QueryFilterService::apply($query, $request, $model, $config);
         // dd($query->toSql(), $query->getBindings());
 
@@ -55,7 +65,7 @@ class MKendaraanController extends BaseApiController
     {
         return [
             'primary_key' => 'id',
-            'only_fields' => ['no_uji', 'no_kendaraan', 'nama_pemilik', 'no_rangka', 'no_mesin'],
+            'only_fields' => ['id', 'no_uji', 'no_kendaraan', 'nama_pemilik', 'no_rangka', 'no_mesin'],
             'labels' => [
                 'no_uji' => 'No Uji',
                 'no_kendaraan' => 'No Kendaraan',
@@ -63,9 +73,8 @@ class MKendaraanController extends BaseApiController
                 'no_rangka' => 'No Rangka',
                 'no_mesin' => 'No Mesin',
             ],
-
             'searchable' => ['no_uji', 'no_kendaraan', 'nama_pemilik', 'no_rangka', 'no_mesin'],
-            'sortable' => ['no_uji', 'no_kendaraan', 'nama_pemilik', 'no_rangka', 'no_mesin'],
+            // 'sortable' => ['no_uji', 'no_kendaraan', 'nama_pemilik', 'no_rangka', 'no_mesin'],
         ];
     }
 
@@ -153,11 +162,10 @@ class MKendaraanController extends BaseApiController
      */
     public function store(Request $request)
     {
-        // validasi minimal aja (biar fleksibel)
         $validator = Validator::make($request->all(), [
-            'no_uji' => 'required',
-            'nama_pemilik' => 'required',
-            'no_rangka' => 'required',
+            'no_uji' => 'sometimes|required',
+            'nama_pemilik' => 'sometimes|required',
+            'no_rangka' => 'sometimes|required',
         ]);
 
         if ($validator->fails()) {
@@ -167,48 +175,37 @@ class MKendaraanController extends BaseApiController
         DB::beginTransaction();
 
         try {
+            $kendaraanFields = (new MKendaraan())->getFillable();
+
+            $kendaraanData = collect($request->only($kendaraanFields))
+                ->filter(fn($v) => $v !== null && $v !== '');
+
+            // uppercase kalau ada
+            if ($kendaraanData->has('nama_pemilik')) {
+                $kendaraanData['nama_pemilik'] = strtoupper($kendaraanData['nama_pemilik']);
+            }
+
+            $kendaraan = MKendaraan::create($kendaraanData->toArray());
+
             // ======================
-            // 🔹 1. KENDARAAN
+            // SPESIFIKASI
             // ======================
-            $kendaraanModel = new MKendaraan();
-            $kendaraanFields = $kendaraanModel->getFillable();
+            $spesifikasiFields = (new MKendaraanSpesifikasi())->getFillable();
 
-            $kendaraanData = $request->only($kendaraanFields);
+            $spesifikasiData = collect($request->only($spesifikasiFields))
+                ->filter(fn($v) => $v !== null && $v !== '');
 
-            $kendaraan = MKendaraan::create($kendaraanData);
-
-            // ======================
-            // 🔹 2. SPESIFIKASI
-            // ======================
-            $spesifikasiModel = new MKendaraanSpesifikasi();
-            $spesifikasiFields = $spesifikasiModel->getFillable();
-
-            $spesifikasiData = $request->only($spesifikasiFields);
-
-            // pastikan tidak override FK
-            unset($spesifikasiData['kendaraan_id']);
-
-            // hanya insert kalau ada isi
-            if (collect($spesifikasiData)->filter(function ($v) {
-                return $v !== null && $v !== '';
-            })->isNotEmpty()) {
-
-                $kendaraan->spesifikasiKendaraan()->create($spesifikasiData);
+            if ($spesifikasiData->isNotEmpty()) {
+                $kendaraan->spesifikasiKendaraan()->create($spesifikasiData->toArray());
             }
 
             DB::commit();
 
-            // load relasi biar langsung siap pakai
             $kendaraan->load($this->getRelations());
 
-            // 🔥 flatten biar konsisten dengan index
             $data = FlattenHelper::flatten([$kendaraan], $this->getDetailConfig());
 
-            return $this->success(
-                $data[0],
-                'Data kendaraan berhasil dibuat',
-                201
-            );
+            return $this->success($data[0], 'Data kendaraan berhasil dibuat', 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e);
@@ -309,14 +306,13 @@ class MKendaraanController extends BaseApiController
         $this->normalizeRequest($request);
 
         $validator = Validator::make($request->all(), [
-            'no_uji' => ['required',  Rule::unique('m_kendaraans', 'no_uji')->ignore($id)],
-            'no_mesin' => [Rule::unique('m_kendaraans', 'no_mesin')->ignore($id)],
-            'no_rangka' => ['required',  Rule::unique('m_kendaraans', 'no_rangka')->ignore($id)],
-            'no_srb' => [Rule::unique('m_kendaraans', 'no_srb')->ignore($id)],
-            'no_srut' => [Rule::unique('m_kendaraans', 'no_srut')->ignore($id)],
-            'no_sut' => [Rule::unique('m_kendaraans', 'no_sut')->ignore($id)],
-            'nama_pemilik' => 'required',
-            'no_rangka' => 'required',
+            'no_uji' => ['sometimes', Rule::unique('m_kendaraans', 'no_uji')->ignore($id)],
+            'no_mesin' => ['sometimes', Rule::unique('m_kendaraans', 'no_mesin')->ignore($id)],
+            'no_rangka' => ['sometimes', Rule::unique('m_kendaraans', 'no_rangka')->ignore($id)],
+            'no_srb' => ['sometimes', Rule::unique('m_kendaraans', 'no_srb')->ignore($id)],
+            'no_srut' => ['sometimes', Rule::unique('m_kendaraans', 'no_srut')->ignore($id)],
+            'no_sut' => ['sometimes', Rule::unique('m_kendaraans', 'no_sut')->ignore($id)],
+            'nama_pemilik' => 'sometimes|required',
         ]);
 
         if ($validator->fails()) {
@@ -326,61 +322,47 @@ class MKendaraanController extends BaseApiController
         DB::beginTransaction();
 
         try {
-            // ======================
-            // 🔹 1. AMBIL DATA
-            // ======================
             $kendaraan = MKendaraan::with('spesifikasiKendaraan')->findOrFail($id);
 
             // ======================
-            // 🔹 2. UPDATE KENDARAAN
+            // 🔹 UPDATE KENDARAAN (PARTIAL)
             // ======================
             $kendaraanFields = (new MKendaraan())->getFillable();
-            $kendaraanData = $request->only($kendaraanFields);
 
-            if (isset($kendaraanData['nama_pemilik'])) {
+            $kendaraanData = collect($request->only($kendaraanFields))
+                ->filter(fn($v) => $v !== null && $v !== '');
+
+            if ($kendaraanData->has('nama_pemilik')) {
                 $kendaraanData['nama_pemilik'] = strtoupper($kendaraanData['nama_pemilik']);
             }
 
-            $kendaraan->update($kendaraanData);
+            if ($kendaraanData->isNotEmpty()) {
+                $kendaraan->update($kendaraanData->toArray());
+            }
 
             // ======================
-            // 🔹 3. HANDLE SPESIFIKASI
+            // 🔹 UPDATE SPESIFIKASI
             // ======================
             $spesifikasiFields = (new MKendaraanSpesifikasi())->getFillable();
-            $spesifikasiData = $request->only($spesifikasiFields);
 
-            unset($spesifikasiData['kendaraan_id']);
+            $spesifikasiData = collect($request->only($spesifikasiFields))
+                ->filter(fn($v) => $v !== null && $v !== '');
 
-            // cek apakah ada data yang dikirim
-            $hasSpesifikasiInput = collect($spesifikasiData)->filter(function ($v) {
-                return $v !== null && $v !== '';
-            })->isNotEmpty();
-
-            if ($hasSpesifikasiInput) {
+            if ($spesifikasiData->isNotEmpty()) {
                 if ($kendaraan->spesifikasiKendaraan) {
-                    // ✅ update existing
-                    $kendaraan->spesifikasiKendaraan->update($spesifikasiData);
+                    $kendaraan->spesifikasiKendaraan->update($spesifikasiData->toArray());
                 } else {
-                    // ✅ create baru
-                    $kendaraan->spesifikasiKendaraan()->create($spesifikasiData);
+                    $kendaraan->spesifikasiKendaraan()->create($spesifikasiData->toArray());
                 }
             }
 
             DB::commit();
 
-            // ======================
-            // 🔹 4. LOAD RELASI
-            // ======================
             $kendaraan->load($this->getRelations());
 
-            // 🔥 flatten biar konsisten dengan index
             $data = FlattenHelper::flatten([$kendaraan], $this->getDetailConfig());
 
-            return $this->success(
-                $data[0],
-                'Data kendaraan berhasil diupdate',
-                200
-            );
+            return $this->success($data[0], 'Data kendaraan berhasil diupdate', 200);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e);
