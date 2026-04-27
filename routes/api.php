@@ -24,6 +24,7 @@ use App\Http\Controllers\MasterSubJenisKendaraanController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MKendaraanController;
 use App\Http\Controllers\RoleManagementController;
+use App\Http\Controllers\RollingAlatController;
 use App\Http\Controllers\UserManagementController;
 
 /*
@@ -195,19 +196,17 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
     /**
      * PENGATURAN
      */
-    Route::prefix('pengaturan')->group(function () {
-        // ROLLING ALAT
-        Route::get('/rolling-alat', fn() => response()->json(['message' => 'Rolling Alat OK']));
-        Route::post('/rolling-alat', fn() => response()->json(['message' => 'Create Rolling Alat OK']));
-        Route::put('/rolling-alat/{id}', fn() => response()->json(['message' => 'Update Rolling Alat OK']));
-        Route::delete('/rolling-alat/{id}', fn() => response()->json(['message' => 'Delete Rolling Alat OK']));
-    });
+    // Route::prefix('pengaturan')->group(function () {});
     /**
      * PENGATURAN KHUSUS ADMIN
      */
     Route::prefix('pengaturan')
         ->middleware('check.role:1')
         ->group(function () {
+            // ROLLING ALAT
+            Route::get('/rolling-alat', [RollingAlatController::class, 'index']);
+            Route::post('/rolling-alat', [RollingAlatController::class, 'store']);
+
             // USER MANAGEMENT
             Route::get('/user-management/counts', [UserManagementController::class, 'counts']);
             Route::get('/user-management', [UserManagementController::class, 'index']);

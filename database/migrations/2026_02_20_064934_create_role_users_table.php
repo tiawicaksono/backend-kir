@@ -15,6 +15,12 @@ return new class extends Migration
             $table->foreignId('user_id')->references('id')->on('m_users')->cascadeOnDelete();
             $table->foreignId('role_id')->references('id')->on('m_roles')->cascadeOnDelete();
             $table->boolean('is_active')->default(true);
+            $table->integer('gedung_uji')->nullable();
+            $table->boolean('prauji')->default(false);
+            $table->boolean('emisi')->default(false);
+            $table->boolean('lampu')->default(false);
+            $table->boolean('pitlift')->default(false);
+            $table->boolean('rem')->default(false);
             $table->timestamps();
             // composite primary key
             $table->primary(['user_id', 'role_id']);

@@ -67,7 +67,15 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Role::class, 'm_role_users')
             ->using(RoleUser::class)
-            ->withPivot('is_active')
+            ->withPivot([
+                'gedung_uji',
+                'prauji',
+                'emisi',
+                'lampu',
+                'pitlift',
+                'rem',
+                'is_active'
+            ])
             ->withTimestamps();
     }
 

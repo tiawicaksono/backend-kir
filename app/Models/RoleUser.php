@@ -11,7 +11,22 @@ class RoleUser extends Pivot
     protected $fillable = [
         'user_id',
         'role_id',
+        'gedung_uji',
+        'prauji',
+        'emisi',
+        'lampu',
+        'pitlift',
+        'rem',
         'is_active'
+    ];
+
+    protected $casts = [
+        'prauji' => 'boolean',
+        'emisi' => 'boolean',
+        'lampu' => 'boolean',
+        'pitlift' => 'boolean',
+        'rem' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function user()
