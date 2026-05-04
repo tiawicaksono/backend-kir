@@ -30,13 +30,20 @@ return new class extends Migration
             $table->boolean('is_uji_ditempat')->default(false);
             $table->boolean('is_daftar_online')->default(false);
             $table->boolean('is_dikuasakan')->default(false);
+            $table->foreignId('biro_jasa_id')->constrained('m_biro_jasas')->restrictOnDelete();
             $table->string('nama_pengurus')->nullable();
-            $table->string('no_ktp_pengurus')->nullable();
+            $table->string('company_pengurus')->nullable();
             $table->string('no_hp_pengurus')->nullable();
             $table->boolean('is_kartu_hilang')->default(false);
             $table->text('no_kartu_hilang')->nullable()->unique();
-            $table->enum('status', ['expired', 'belum datang', 'sudah datang'])->default('belum datang');
+            $table->text('status')->default('belum datang');
+            $table->unique([
+                'kendaraan_id',
+                'tanggal_uji',
+                'status_penerbitan_id'
+            ]);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

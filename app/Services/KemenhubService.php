@@ -97,4 +97,58 @@ class KemenhubService
             ];
         }
     }
+
+    /**
+     * ===============================
+     * CHECK NUMPANG DAN MUTASI
+     * ===============================
+     */
+    public function checkPengujianKeluar(string $noUji, int $statusPenerbitan)
+    {
+        $apiToken = ApiToken::where('is_active', true)->first();
+
+        if (!$apiToken) {
+            throw new \Exception("Api Token tidak aktif");
+        }
+
+        $response = Http::retry(3, 1000)
+            ->timeout(10)
+            ->withoutVerifying()
+            ->withHeaders([
+                'Content-Type' => 'application/json'
+            ])
+            ->post($apiToken->url_api, [
+                "token" => $apiToken->token,
+                "prefix" => "checkpengujiankeluar",
+                "param" => [
+                    "nouji" => $noUji,
+                    "statuspenerbitan" => $statusPenerbitan
+                ]
+            ]);
+
+        if (!$response->successful()) {
+            throw new \Exception("Gagal request ke Kementrian");
+        }
+
+        $json = $response->json();
+
+        if (!($json['status'] ?? false)) {
+            return null;
+        }
+
+        return $json['data'] ?? null;
+    }
+
+    public function mapToKendaraan(array $data): array
+    {
+        return [
+            'no_uji' => $data['exam_code'] ?? null,
+            'no_mesin' => $data['nomesin'] ?? null,
+            'no_rangka' => $data['norangka'] ?? null,
+            'no_kendaraan' => $data['nonrkb'] ?? null,
+            'nama_pemilik' => $data['owner_name'] ?? null,
+            'alamat' => $data['owner_address'] ?? null,
+            'no_identitas' => $data['owner_nik'] ?? null,
+        ];
+    }
 }

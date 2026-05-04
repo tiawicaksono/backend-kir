@@ -38,9 +38,9 @@ return new class extends Migration
             $table->foreign('provinsi_id')->references('id')->on('master_provinsis')->restrictOnDelete();
             $table->integer('kota_id');
             $table->foreign('kota_id')->references('id')->on('master_kotas')->restrictOnDelete();
-            $table->integer('kecamatan_id');
+            $table->bigInteger('kecamatan_id');
             $table->foreign('kecamatan_id')->references('id')->on('master_kecamatans')->restrictOnDelete();
-            $table->integer('kelurahan_id');
+            $table->bigInteger('kelurahan_id');
             $table->foreign('kelurahan_id')->references('id')->on('master_kelurahans')->restrictOnDelete();
             $table->string('no_rangka')->unique();
             $table->string('no_mesin')->unique()->nullable();

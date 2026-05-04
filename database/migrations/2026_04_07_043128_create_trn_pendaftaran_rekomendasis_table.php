@@ -20,13 +20,13 @@ return new class extends Migration
             $table->string('no_pemilik_tujuan')->nullable();
             $table->string('nama_pemilik_tujuan')->nullable();
             $table->string('alamat_pemilik_tujuan')->nullable();
-            $table->string('provinsi_id');
+            $table->integer('provinsi_id');
             $table->foreign('provinsi_id')->references('id')->on('master_provinsis')->restrictOnDelete();
-            $table->string('kota_id');
+            $table->integer('kota_id');
             $table->foreign('kota_id')->references('id')->on('master_kotas')->restrictOnDelete();
-            $table->string('kecamatan_id');
+            $table->integer('kecamatan_id');
             $table->foreign('kecamatan_id')->references('id')->on('master_kecamatans')->restrictOnDelete();
-            $table->string('kelurahan_id');
+            $table->integer('kelurahan_id');
             $table->foreign('kelurahan_id')->references('id')->on('master_kelurahans')->restrictOnDelete();
             $table->boolean('is_mutasi_keluar')->default(false);
             $table->boolean('is_numpang_keluar')->default(false);
