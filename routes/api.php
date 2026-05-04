@@ -26,6 +26,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MKendaraanController;
 use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\RollingAlatController;
+use App\Http\Controllers\TrnPendaftaranController;
 use App\Http\Controllers\UserManagementController;
 use App\Models\MBiroJasa;
 
@@ -56,6 +57,47 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-token', [AuthController::class, 'logoutToken']);
+
+    /**
+     * ===============================
+     * OPTIONS
+     * ===============================
+     */
+    Route::prefix('options')->group(function () {
+        // SELECT OPTIONS WILAYAH
+        Route::get('/provinsi', [MasterProvinsiController::class, 'options']);
+        Route::get('/kota', [MasterKotaController::class, 'options']);
+        Route::get('/kecamatan', [MasterKecamatanController::class, 'options']);
+        Route::get('/kelurahan', [MasterKelurahanController::class, 'options']);
+
+        // SELECT OPTIONS MERK
+        Route::get('/merk', [MasterMerkController::class, 'options']);
+        Route::get('/varianmerk', [MasterMerkVarianController::class, 'options']);
+        Route::get('/tipevarianmerk', [MasterMerkVarianTipeController::class, 'options']);
+
+        // SELECT OPTIONS JENIS KENDARAAN
+        Route::get('/vehicletype', [MasterJenisKendaraanController::class, 'options']);
+        Route::get('/subvehicletype', [MasterSubJenisKendaraanController::class, 'options']);
+
+        // SELECT OPTIONS BAHAN BAKAR
+        Route::get('/bahanbakar', [MasterBahanBakarController::class, 'options']);
+
+        // SELECT OPTIONS BAHAN UTAMA
+        Route::get('/bahanutama', [MasterBahanUtamaController::class, 'options']);
+
+        // SELECT OPTIONS KONFIGURASI SUMBU
+        Route::get('/konfigurasisumbu', [MasterKonfigurasiSumbuController::class, 'options']);
+
+        // SELECT OPTIONS KELAS JALAN
+        Route::get('/kelasjalan', [MasterKelasJalanController::class, 'options']);
+
+        // SELECT OPTIONS STATUS PENERBITAN
+        Route::get('/statuspenerbitan', [MasterStatusPenerbitanController::class, 'options']);
+
+        // SELECT OPTIONS BIRO JASA
+        Route::get('/birojasa', [MBiroJasaController::class, 'options']);
+    });
+
 
     /**
      * ===============================
@@ -125,6 +167,9 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
 
     // Loket
     Route::prefix('loket')->group(function () {
+        // PENDAFTARAN
+        Route::get('/pendaftaran/search-kendaraan', [TrnPendaftaranController::class, 'search']);
+
         Route::get('/pembayaran', fn() => response()->json(['message' => 'Pembayaran OK']));
         Route::post('/pembayaran', fn() => response()->json(['message' => 'Create Pembayaran OK']));
     });
@@ -137,34 +182,6 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::get('/kendaraan/counts', [MKendaraanController::class, 'counts']);
         Route::get('/kendaraan/{id}/riwayat-uji', [MKendaraanController::class, 'riwayatUji']);
         Route::apiResource('kendaraan', MKendaraanController::class);
-
-
-        // SELECT OPTIONS WILAYAH
-        Route::get('/provinsi/options', [MasterProvinsiController::class, 'options']);
-        Route::get('/kota/options', [MasterKotaController::class, 'options']);
-        Route::get('/kecamatan/options', [MasterKecamatanController::class, 'options']);
-        Route::get('/kelurahan/options', [MasterKelurahanController::class, 'options']);
-
-        // SELECT OPTIONS MERK
-        Route::get('/merk/options', [MasterMerkController::class, 'options']);
-        Route::get('/varianmerk/options', [MasterMerkVarianController::class, 'options']);
-        Route::get('/tipevarianmerk/options', [MasterMerkVarianTipeController::class, 'options']);
-
-        // SELECT OPTIONS JENIS KENDARAAN
-        Route::get('/vehicletype/options', [MasterJenisKendaraanController::class, 'options']);
-        Route::get('/subvehicletype/options', [MasterSubJenisKendaraanController::class, 'options']);
-
-        // SELECT OPTIONS BAHAN BAKAR
-        Route::get('/bahanbakar/options', [MasterBahanBakarController::class, 'options']);
-
-        // SELECT OPTIONS BAHAN UTAMA
-        Route::get('/bahanutama/options', [MasterBahanUtamaController::class, 'options']);
-
-        // SELECT OPTIONS KONFIGURASI SUMBU
-        Route::get('/konfigurasisumbu/options', [MasterKonfigurasiSumbuController::class, 'options']);
-
-        // SELECT OPTIONS KELAS JALAN
-        Route::get('/kelasjalan/options', [MasterKelasJalanController::class, 'options']);
     });
     /**
      * ===============================
@@ -201,7 +218,6 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
      */
     Route::prefix('pengaturan')->group(function () {
         // KONFIGURASI SUMBU
-        Route::get('/birojasa/options', [MBiroJasaController::class, 'options']);
         Route::get('/birojasa/counts', [MBiroJasaController::class, 'counts']);
         Route::apiResource('birojasa', MBiroJasaController::class);
     });
