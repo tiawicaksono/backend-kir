@@ -465,4 +465,23 @@ class MKendaraanController extends BaseApiController
             'spesifikasiKendaraan.kelasJalan',
         ];
     }
+
+    public function riwayatUji()
+    {
+        $jenis = ["Uji Pertama", "Berkala", "Numpang Uji Keluar"];
+        $hasil = ["Lulus", "Tidak Lulus"];
+        $penguji = ["SUTOPO, A.Ma, PKB., S.T.", "LEDYS KARTONO PUTERA, A.Ma. PKB., SH."];
+
+        $data = collect(range(1, 17))->map(function ($i) use ($jenis, $hasil, $penguji) {
+            return [
+                "id" => $i,
+                "tanggal_uji" => now()->subDays(rand(10, 500))->format('Y-m-d'),
+                "jenis_uji" => $jenis[array_rand($jenis)],
+                "nama_penguji" => $penguji[array_rand($penguji)],
+                "hasil_uji" => $hasil[array_rand($hasil)],
+            ];
+        });
+
+        return response()->json($data);
+    }
 }

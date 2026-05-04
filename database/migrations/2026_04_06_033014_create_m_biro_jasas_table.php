@@ -11,12 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('master_kecamatans', function (Blueprint $table) {
+        Schema::create('m_biro_jasas', function (Blueprint $table) {
             $table->id();
-            $table->integer('kota_id');
-            $table->foreign('kota_id')->references('id')->on('master_kotas')->restrictOnDelete();
-            $table->string('nama_kecamatan');
+            $table->string('name');
+            $table->string('company');
+            $table->string('no_hp')->nullable();
+            $table->boolean('status')->default(true);
             $table->timestamps();
+
+            $table->unique(['no_hp']);
         });
     }
 
@@ -25,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('master_kecamatans');
+        Schema::dropIfExists('m_biro_jasas');
     }
 };

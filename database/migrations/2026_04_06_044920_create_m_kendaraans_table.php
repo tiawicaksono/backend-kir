@@ -24,6 +24,7 @@ return new class extends Migration
             $table->date('tanggal_srb')->nullable();
             $table->date('tanggal_stnk')->nullable();
             $table->string('tahun_kendaraan')->nullable();
+            $table->date('tanggal_mati_uji')->nullable();
             $table->string('no_uji')->unique();
             $table->string('no_kendaraan')->nullable();
             $table->string('identitas')->nullable();
@@ -33,13 +34,13 @@ return new class extends Migration
             $table->string('alamat')->nullable();
             $table->string('rt')->nullable();
             $table->string('rw')->nullable();
-            $table->string('provinsi_id');
+            $table->integer('provinsi_id');
             $table->foreign('provinsi_id')->references('id')->on('master_provinsis')->restrictOnDelete();
-            $table->string('kota_id');
+            $table->integer('kota_id');
             $table->foreign('kota_id')->references('id')->on('master_kotas')->restrictOnDelete();
-            $table->string('kecamatan_id');
+            $table->integer('kecamatan_id');
             $table->foreign('kecamatan_id')->references('id')->on('master_kecamatans')->restrictOnDelete();
-            $table->string('kelurahan_id');
+            $table->integer('kelurahan_id');
             $table->foreign('kelurahan_id')->references('id')->on('master_kelurahans')->restrictOnDelete();
             $table->string('no_rangka')->unique();
             $table->string('no_mesin')->unique()->nullable();

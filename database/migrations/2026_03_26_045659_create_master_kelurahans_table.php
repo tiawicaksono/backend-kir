@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('master_kelurahans', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('kecamatan_id');
+            $table->id();
+            $table->integer('kecamatan_id');
             $table->foreign('kecamatan_id')->references('id')->on('master_kecamatans')->restrictOnDelete();
             $table->string('nama_kelurahan');
             $table->timestamps();

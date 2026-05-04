@@ -21,11 +21,13 @@ use App\Http\Controllers\MasterPegawaiController;
 use App\Http\Controllers\MasterProvinsiController;
 use App\Http\Controllers\MasterStatusPenerbitanController;
 use App\Http\Controllers\MasterSubJenisKendaraanController;
+use App\Http\Controllers\MBiroJasaController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MKendaraanController;
 use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\RollingAlatController;
 use App\Http\Controllers\UserManagementController;
+use App\Models\MBiroJasa;
 
 /*
 |--------------------------------------------------------------------------
@@ -133,6 +135,7 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
     Route::prefix('master')->group(function () {
         // KENDARAAN
         Route::get('/kendaraan/counts', [MKendaraanController::class, 'counts']);
+        Route::get('/kendaraan/{id}/riwayat-uji', [MKendaraanController::class, 'riwayatUji']);
         Route::apiResource('kendaraan', MKendaraanController::class);
 
 
@@ -196,7 +199,12 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
     /**
      * PENGATURAN
      */
-    // Route::prefix('pengaturan')->group(function () {});
+    Route::prefix('pengaturan')->group(function () {
+        // KONFIGURASI SUMBU
+        Route::get('/birojasa/options', [MBiroJasaController::class, 'options']);
+        Route::get('/birojasa/counts', [MBiroJasaController::class, 'counts']);
+        Route::apiResource('birojasa', MBiroJasaController::class);
+    });
     /**
      * PENGATURAN KHUSUS ADMIN
      */
