@@ -26,6 +26,7 @@ class SyncKendaraan extends Command
 
         $data = DB::connection('remote_pgsql')
             ->table('v_kendaraan')
+            ->orderBy('id_kendaraan')
             ->chunk(
                 500,
                 function ($data) {
@@ -33,7 +34,13 @@ class SyncKendaraan extends Command
                     foreach ($data as $row) {
                         $status = $row->umum ? 'UMUM' : 'BUKAN UMUM';
                         $id = $row->id_kendaraan;
-
+                        $bahan_bakar = $row->fuel_id == 0 ? 47 : $row->fuel_id;
+                        $merk = $row->vehicle_brand_id == 0 ? 1 : $row->vehicle_brand_id;
+                        $varian_merk = $row->vehicle_varian_type_id == 0 ? 24 : $row->vehicle_varian_type_id;
+                        $tipe_varian_merk = $row->vehicle_varian_id == 0 ? 14 : $row->vehicle_varian_id;
+                        $jenis_kendaraan = $row->vehicle_type_id == 0 ? 1 : $row->vehicle_type_id;
+                        $sub_jenis_kendaraan = $row->vehicle_sub_id == 0 ? 1 : $row->vehicle_sub_id;
+                        $kelas_jalan = $row->kelasjalan_id1 == 0 ? 54 : $row->kelasjalan_id1;
                         /**
                          * KONFIGURASI SUMBU
                          */
@@ -72,11 +79,11 @@ class SyncKendaraan extends Command
                                 'no_rangka' => $row->no_chasis,
                                 'no_mesin' => $row->no_mesin,
                                 'status' => $status,
-                                'merk_id' => $row->vehicle_brand_id,
-                                'varian_merk_id' => $row->vehicle_varian_type_id,
-                                'tipe_varian_merk_id' => $row->vehicle_varian_id,
-                                'jenis_kendaraan_id' => $row->vehicle_type_id,
-                                'sub_jenis_kendaraan_id' => $row->vehicle_sub_id,
+                                'merk_id' => is_numeric($merk) ? (int) $merk : 1,
+                                'varian_merk_id' => is_numeric($varian_merk) ? (int) $varian_merk : 24,
+                                'tipe_varian_merk_id' => is_numeric($tipe_varian_merk) ? (int) $tipe_varian_merk : 14,
+                                'jenis_kendaraan_id' => is_numeric($jenis_kendaraan) ? (int) $jenis_kendaraan : 1,
+                                'sub_jenis_kendaraan_id' => is_numeric($sub_jenis_kendaraan) ? (int) $sub_jenis_kendaraan : 1,
                                 'warna_cabin' => $row->warna,
                                 'warna_bak' => $row->warna_bak,
                                 'bahan_utama_id' => 1,
@@ -89,12 +96,14 @@ class SyncKendaraan extends Command
 
                         // insert spesifikasi
                         DB::table('m_kendaraan_spesifikasis')->updateOrInsert(
-                            ['id' => $id],
+                            ['kendaraan_id' => $id],
                             [
                                 'kendaraan_id' => $id,
                                 'isi_silinder' => $this->toIntOrNull($row->isi_silinder),
                                 'daya_motor' => $this->toDecimalOrNull($row->daya_motor),
                                 'bahan_bakar_id' => $row->fuel_id,
+                                'bahan_bakar_id' => is_numeric($bahan_bakar) ? (int) $bahan_bakar : 47,
+
                                 'panjang_utama' => $this->toIntOrNull($row->ukuran_panjang),
                                 'lebar_utama' => $this->toIntOrNull($row->ukuran_lebar),
                                 'tinggi_utama' => $this->toIntOrNull($row->ukuran_tinggi),
@@ -129,7 +138,7 @@ class SyncKendaraan extends Command
                                 'mst' => $this->toIntOrNull($row->mst),
                                 'daya_angkut_orang' => $this->toIntOrNull($row->kemorang),
                                 'daya_angkut_barang' => $this->toIntOrNull($row->kembarang),
-                                'kelas_jalan_id' => $row->kelasjalan_id1,
+                                'kelas_jalan_id' => is_numeric($kelas_jalan) ? (int) $kelas_jalan : 54,
                                 'ukuran_qr' => $this->toIntOrNull($row->ukq),
                                 'ukuran_p1' => $this->toIntOrNull($row->ukp),
                                 'ukuran_p2' => $this->toIntOrNull($row->ukp2),
