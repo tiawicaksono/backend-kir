@@ -21,15 +21,13 @@ class UserSeeder extends Seeder
                 'name' => 'Admin',
                 'phone' => '085755124531',
                 'email' => 'admin@kir.com',
-                'password' => bcrypt('password'),
-                'role_id' => $admin->id
+                'password' => bcrypt('Test12345@')
             ],
             [
                 'name' => 'Tia Wicaksono',
                 'phone' => '085755124535',
                 'email' => 'wicaksono.tia@gmail.com',
-                'password' => bcrypt('password'),
-                'role_id' => $admin->id
+                'password' => bcrypt('Test12345@')
             ]
         ]);
 
@@ -39,15 +37,13 @@ class UserSeeder extends Seeder
                 'name' => 'Operator 1',
                 'phone' => '085755124532',
                 'email' => 'operator1@kir.com',
-                'password' => bcrypt('password'),
-                'role_id' => $staff->id
+                'password' => bcrypt('Test12345@')
             ],
             [
                 'name' => 'Operator 2',
                 'phone' => '085755124533',
                 'email' => 'operator2@kir.com',
-                'password' => bcrypt('password'),
-                'role_id' => $staff->id
+                'password' => bcrypt('Test12345@')
             ]
         ]);
 
@@ -57,15 +53,13 @@ class UserSeeder extends Seeder
                 'name' => 'Penguji 1',
                 'phone' => '085755124534',
                 'email' => 'penguji1@kir.com',
-                'password' => bcrypt('password'),
-                'role_id' => $penguji->id
+                'password' => bcrypt('Test12345@')
             ],
             [
                 'name' => 'Penguji 2',
                 'phone' => '085755124536',
                 'email' => 'penguji2@kir.com',
-                'password' => bcrypt('password'),
-                'role_id' => $penguji->id
+                'password' => bcrypt('Test12345@')
             ]
         ]);
     }
