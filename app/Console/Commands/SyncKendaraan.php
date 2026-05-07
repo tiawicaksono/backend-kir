@@ -77,7 +77,7 @@ class SyncKendaraan extends Command
                     'sub_jenis_kendaraan_id' => $row->vehicle_sub_id,
                     'warna_cabin' => $row->warna,
                     'warna_bak' => $row->warna_bak,
-                    // 'bahan_utama_id' => $row->karoseri_bahan,
+                    'bahan_utama_id' => 1,
                     'jumlah_duduk' => 0,
                     'jumlah_berdiri' => 0,
                     'created_at' => now(),
