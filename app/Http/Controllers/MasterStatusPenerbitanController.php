@@ -241,4 +241,44 @@ class MasterStatusPenerbitanController extends BaseApiController
             );
         }
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options()
+    {
+        $data = MasterStatusPenerbitan::select(
+            'issuance_id',
+            'issuance_name'
+        )
+            ->orderBy('issuance_name')
+            ->get()
+            ->map(function ($item) {
+
+                // 🔑 mapping ID → CODE
+                $code = match ($item->issuance_id) {
+                    1 => 'PERTAMA',
+                    2 => 'BERKALA',
+                    3 => 'MUTASI',
+                    4 => 'NUMPANG',
+                    default => 'UNKNOWN',
+                };
+
+                // 🔥 RULE DI BACKEND
+                $allowedFor = match ($code) {
+                    'PERTAMA' => ['not_found'],
+                    'BERKALA', 'MUTASI', 'NUMPANG' => ['found'],
+                    default => [],
+                };
+
+                return [
+                    'label' => $item->issuance_name,
+                    'value' => $item->issuance_id,
+                    'code' => $code,
+                    'allowed_for' => $allowedFor,
+                ];
+            });
+
+        return response()->json($data);
+    }
 }
