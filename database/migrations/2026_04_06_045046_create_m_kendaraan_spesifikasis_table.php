@@ -17,7 +17,7 @@ return new class extends Migration
                 ->constrained('m_kendaraans')
                 ->cascadeOnDelete();
             $table->integer('isi_silinder')->unsigned()->default(0);
-            $table->integer('daya_motor')->unsigned()->default(0);
+            $table->decimal('daya_motor', 10, 2)->unsigned()->default(0);
             $table->foreignId('bahan_bakar_id')
                 ->references('fuel_id')
                 ->on('master_bahan_bakars')
@@ -67,10 +67,8 @@ return new class extends Migration
             $table->integer('ukuran_p2')->unsigned()->default(0);
             $table->integer('volume_tera')->unsigned()->default(0);
             $table->string('jenis_muatan')->nullable();
-            $table->integer('berat_jenis_muatan')->unsigned()->default(0);
-            $table->integer('volume_muatan')->unsigned()->default(0);
-            $table->timestamps();
-            $table->softDeletes();
+            $table->decimal('berat_jenis_muatan')->unsigned()->default(0);
+            $table->decimal('volume_muatan')->unsigned()->default(0);
         });
     }
 
