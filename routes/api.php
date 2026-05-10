@@ -28,7 +28,6 @@ use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\RollingAlatController;
 use App\Http\Controllers\TrnPendaftaranController;
 use App\Http\Controllers\UserManagementController;
-use App\Models\MBiroJasa;
 
 /*
 |--------------------------------------------------------------------------
@@ -96,6 +95,9 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
 
         // SELECT OPTIONS BIRO JASA
         Route::get('/birojasa', [MBiroJasaController::class, 'options']);
+
+        // SELECT OPTIONS AREA
+        Route::get('/area', [MasterAreaController::class, 'options']);
     });
 
 

@@ -73,4 +73,20 @@ class MasterAreaController extends BaseApiController
     {
         return response()->json($masterArea);
     }
+
+    /**
+     * Get options for select input
+     */
+    public function options()
+    {
+        $data = MasterArea::select('area_id', 'area_name')
+            ->orderBy('area_name')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->area_name,
+                'value' => $item->area_id,
+            ]);
+
+        return response()->json($data);
+    }
 }
