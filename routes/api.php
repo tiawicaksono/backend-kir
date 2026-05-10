@@ -171,6 +171,7 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
     Route::prefix('loket')->group(function () {
         // PENDAFTARAN
         Route::get('/pendaftaran/search-kendaraan', [TrnPendaftaranController::class, 'search']);
+        Route::apiResource('/pendaftaran', TrnPendaftaranController::class);
 
         Route::get('/pembayaran', fn() => response()->json(['message' => 'Pembayaran OK']));
         Route::post('/pembayaran', fn() => response()->json(['message' => 'Create Pembayaran OK']));

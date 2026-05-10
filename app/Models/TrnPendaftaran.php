@@ -14,7 +14,8 @@ class TrnPendaftaran extends Model
     protected $fillable = [
         'kendaraan_id',
         'status_penerbitan_id',
-        'no_pendaftaran',
+        'no_pendaftaran_harian',
+        'no_pendaftaran_tahunan',
         'tanggal_pendaftaran',
         'tanggal_uji',
         'tanggal_mati_uji',
@@ -33,17 +34,21 @@ class TrnPendaftaran extends Model
     ];
 
     protected $casts = [
+        'kendaraan_id' => 'integer',
+        'status_penerbitan_id' => 'integer',
+        'no_pendaftaran_harian' => 'string',
+        'no_pendaftaran_tahunan' => 'string',
         'tanggal_pendaftaran' => 'date',
         'tanggal_uji' => 'date',
         'tanggal_mati_uji' => 'date',
-
+        'lama_mati_uji' => 'integer',
         'is_ganti_kartu' => 'boolean',
         'is_uji_ditempat' => 'boolean',
         'is_daftar_online' => 'boolean',
         'is_dikuasakan' => 'boolean',
         'is_kartu_hilang' => 'boolean',
-
-        'lama_mati_uji' => 'integer',
+        'no_kartu_hilang' => 'string',
+        'status' => 'string',
     ];
 
     /*
@@ -68,5 +73,11 @@ class TrnPendaftaran extends Model
     public function biroJasa()
     {
         return $this->belongsTo(MBiroJasa::class, 'biro_jasa_id', 'id');
+    }
+
+    // 🔗 ke retribusi
+    public function retribusi()
+    {
+        return $this->hasOne(TrnPendaftaranRetribusi::class, 'pendaftaran_id');
     }
 }

@@ -309,9 +309,9 @@ class MKendaraanController extends BaseApiController
             'no_uji' => ['sometimes', Rule::unique('m_kendaraans', 'no_uji')->ignore($id)],
             'no_mesin' => ['sometimes', Rule::unique('m_kendaraans', 'no_mesin')->ignore($id)],
             'no_rangka' => ['sometimes', Rule::unique('m_kendaraans', 'no_rangka')->ignore($id)],
-            'no_srb' => ['sometimes', Rule::unique('m_kendaraans', 'no_srb')->ignore($id)],
-            'no_srut' => ['sometimes', Rule::unique('m_kendaraans', 'no_srut')->ignore($id)],
-            'no_sut' => ['sometimes', Rule::unique('m_kendaraans', 'no_sut')->ignore($id)],
+            'no_srb' => ['sometimes', 'nullable', Rule::unique('m_kendaraans', 'no_srb')->ignore($id)],
+            'no_srut' => ['sometimes', 'nullable', Rule::unique('m_kendaraans', 'no_srut')->ignore($id)],
+            'no_sut' => ['sometimes', 'nullable', Rule::unique('m_kendaraans', 'no_sut')->ignore($id)],
             'nama_pemilik' => 'sometimes|required',
         ]);
 
