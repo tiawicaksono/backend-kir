@@ -48,11 +48,9 @@ class MasterKecamatanController extends BaseApiController
             'only' => [
                 'kota' => [
                     'only' => ['nama_kota'],
-                    'alias' => ['nama_kota' => 'nama_kota'],
                     'children' => [
                         'provinsi' => [
                             'only' => ['nama_provinsi'],
-                            'alias' => ['nama_provinsi' => 'nama_provinsi']
                         ]
                     ]
                 ]
@@ -60,10 +58,19 @@ class MasterKecamatanController extends BaseApiController
             'labels' => [
                 'id' => 'ID',
                 'nama_kecamatan' => 'Kecamatan',
-                'nama_kota' => 'Kota',
-                'nama_provinsi' => 'Provinsi',
+                'kota_nama_kota' => 'Kota',
+                'kota_provinsi_nama_provinsi' => 'Provinsi',
             ],
-            'searchable' => ['nama_kecamatan', 'kota.nama_kota', 'kota.provinsi.nama_provinsi'],
+            'searchable' => [[
+                'field' => 'nama_kecamatan',
+                'label' => 'Kecamatan'
+            ], [
+                'field' => 'kota.nama_kota',
+                'label' => 'Kota'
+            ], [
+                'field' => 'kota.provinsi.nama_provinsi',
+                'label' => 'Provinsi'
+            ]],
             'sortable' => ['id', 'nama_kecamatan', 'nama_kota', 'nama_provinsi'],
             'hidden' => ['kota_id', 'created_at', 'updated_at'],
         ];

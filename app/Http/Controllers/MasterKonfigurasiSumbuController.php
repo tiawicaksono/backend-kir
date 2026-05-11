@@ -56,7 +56,7 @@ class MasterKonfigurasiSumbuController extends BaseApiController
                 'id' => 'ID',
                 'name' => 'Konfigurasi Sumbu',
             ],
-            'searchable' => ['name'],
+            'searchable' => [['field' => 'name', 'label' => 'Konfigurasi Sumbu']],
             'sortable' => ['name'],
         ];
     }

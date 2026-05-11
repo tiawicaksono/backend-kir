@@ -60,7 +60,7 @@ class MasterProvinsiController extends BaseApiController
                 'id' => 'ID',
                 'nama_provinsi' => 'Provinsi',
             ],
-            'searchable' => ['nama_provinsi'],
+            'searchable' => [['field' => 'nama_provinsi', 'label' => 'Provinsi']],
             'sortable' => ['id', 'nama_provinsi'],
             'hidden' => ['created_at', 'updated_at'],
         ];

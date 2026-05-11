@@ -63,7 +63,10 @@ class MasterBahanUtamaController extends BaseApiController
                 'id' => 'ID',
                 'bahan_utama' => 'Bahan Utama',
             ],
-            'searchable' => ['bahan_utama'],
+            'searchable' => [[
+                'field' => 'bahan_utama',
+                'label' => 'Bahan Utama'
+            ]],
             'sortable' => ['id', 'bahan_utama'],
             'hidden' => ['deleted_at', 'created_at', 'updated_at'],
         ];

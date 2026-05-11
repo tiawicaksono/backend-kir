@@ -29,7 +29,7 @@ class MKendaraanController extends BaseApiController
         // $query = $model::with($this->getRelations());
         $query = $model::query();
 
-        $config = $this->getListConfig();
+        $config = $this->getTableConfig();
 
         // 🔥 DEFAULT SORT PER MODULE
         $primaryKey = $config['primary_key'] ?? null;
@@ -61,7 +61,7 @@ class MKendaraanController extends BaseApiController
         ]);
     }
 
-    private function getListConfig()
+    private function getTableConfig()
     {
         return [
             'primary_key' => 'id',
@@ -73,7 +73,28 @@ class MKendaraanController extends BaseApiController
                 'no_rangka' => 'No Rangka',
                 'no_mesin' => 'No Mesin',
             ],
-            'searchable' => ['no_uji', 'no_kendaraan', 'nama_pemilik', 'no_rangka', 'no_mesin'],
+            'searchable' => [
+                [
+                    'field' => 'no_uji',
+                    'label' => 'No Uji'
+                ],
+                [
+                    'field' => 'no_kendaraan',
+                    'label' => 'No Kendaraan'
+                ],
+                [
+                    'field' => 'nama_pemilik',
+                    'label' => 'Nama Pemilik'
+                ],
+                [
+                    'field' => 'no_rangka',
+                    'label' => 'No Rangka'
+                ],
+                [
+                    'field' => 'no_mesin',
+                    'label' => 'No Mesin'
+                ],
+            ],
             // 'sortable' => ['no_uji', 'no_kendaraan', 'nama_pemilik', 'no_rangka', 'no_mesin'],
         ];
     }

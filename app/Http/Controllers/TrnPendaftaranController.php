@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FlattenHelper;
 use App\Models\MKendaraan;
 use App\Models\TrnPendaftaran;
 use App\Models\TrnPendaftaranRekomendasi;
 use App\Models\TrnPendaftaranRetribusi;
 use App\Services\KemenhubService;
 use App\Services\PendaftaranService;
+use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -116,7 +118,7 @@ class TrnPendaftaranController extends Controller
     public function store(Request $request)
     {
         DB::beginTransaction();
-
+        $user = $request->user();
         try {
 
             // =====================================================
@@ -274,7 +276,8 @@ class TrnPendaftaranController extends Controller
             $pendaftaran = TrnPendaftaran::create([
 
                 'kendaraan_id' => $kendaraanId,
-
+                'petugas_id' => $user->id,
+                'petugas_nama' => $user->name,
                 'status_penerbitan_id' => $issuanceId,
 
                 'no_pendaftaran_harian' => $noPendaftaranHarian,
@@ -362,9 +365,144 @@ class TrnPendaftaranController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(TrnPendaftaran $tblPendaftaran)
+    public function index(Request $request)
     {
-        //
+        $model = TrnPendaftaran::class;
+
+        $query = $model::with([
+            'kendaraan:id,no_uji,no_kendaraan,nama_pemilik',
+            'statusPenerbitan:issuance_id,issuance_name',
+        ]);
+
+        $config = $this->getTableConfig();
+
+        // =========================================
+        // DEFAULT DATE = TODAY
+        // =========================================
+
+        $date = $request->date ?? today()->toDateString();
+
+        $query->whereDate('tanggal_pendaftaran', $date);
+
+        // =========================================
+        // DEFAULT SORT
+        // =========================================
+
+        $primaryKey = $config['primary_key'] ?? null;
+
+        if (!$request->filled('sort_by') && $primaryKey) {
+
+            $request->merge([
+                'sort_by' => $primaryKey,
+                'sort_order' => 'desc',
+            ]);
+        }
+
+        QueryFilterService::apply(
+            $query,
+            $request,
+            $model,
+            $config
+        );
+
+        $perPage = $request->limit ?? 10;
+        $result = $query->paginate($perPage);
+
+        // =========================================
+        // FLATTEN
+        // =========================================
+
+        $data = FlattenHelper::flatten(
+            $result->items(),
+            $config
+        );
+
+        return response()->json([
+            'data' => $data,
+
+            'meta' => [
+                'current_page' => $result->currentPage(),
+                'per_page' => $result->perPage(),
+                'total' => $result->total(),
+            ],
+
+            'config' => $config,
+        ]);
+    }
+
+    private function getTableConfig()
+    {
+        return [
+
+            'primary_key' => 'id',
+            'only_fields' => [
+                'id',
+                'no_pendaftaran_harian',
+                'tanggal_uji',
+            ],
+            'only' => [
+                'kendaraan' => [
+                    'only' => [
+                        'no_uji',
+                        'no_kendaraan',
+                        'nama_pemilik',
+                    ],
+                ],
+
+                'statusPenerbitan' => [
+                    'only' => [
+                        'issuance_name',
+                    ],
+                ]
+            ],
+
+            'labels' => [
+                'no_pendaftaran_harian' => 'No Antrian',
+                'tanggal_uji' => 'Tanggal Uji',
+
+                'kendaraan_no_uji' => 'No Uji',
+                'kendaraan_no_kendaraan' => 'No Kendaraan',
+                'kendaraan_nama_pemilik' => 'Nama Pemilik',
+
+                'status_penerbitan_issuance_name' => 'Pendaftaran',
+            ],
+
+            /**
+             * 🔥 WAJIB DOT NOTATION
+             */
+            'searchable' => [
+                [
+                    'field' => 'no_pendaftaran_harian',
+                    'label' => 'No Antrian',
+                ],
+                [
+                    'field' => 'kendaraan.no_uji',
+                    'label' => 'No Uji',
+                ],
+                [
+                    'field' => 'kendaraan.no_kendaraan',
+                    'label' => 'No Kendaraan',
+                ],
+                [
+                    'field' => 'kendaraan.nama_pemilik',
+                    'label' => 'Nama Pemilik',
+                ],
+                [
+                    'field' => 'statusPenerbitan.issuance_name',
+                    'label' => 'Status Penerbitan',
+                ],
+
+            ],
+
+            'sortable' => [
+                'id',
+                'no_pendaftaran_harian'
+            ],
+
+            'hidden' => [
+                'status_penerbitan_issuance_id',
+            ],
+        ];
     }
 
     /**

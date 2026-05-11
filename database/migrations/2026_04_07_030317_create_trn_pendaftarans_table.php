@@ -21,6 +21,10 @@ return new class extends Migration
                 ->references('issuance_id')
                 ->on('master_status_penerbitans')
                 ->restrictOnDelete();
+            $table->foreignId('petugas_id')
+                ->constrained('m_users')
+                ->restrictOnDelete()->nullable();
+            $table->string('petugas_nama')->nullable();
             $table->string('no_pendaftaran_harian');
             $table->string('no_pendaftaran_tahunan')->unique();
             $table->date('tanggal_pendaftaran')->default(DB::raw('CURRENT_DATE'));

@@ -49,15 +49,17 @@ class MasterKotaController extends BaseApiController
             'only' => [
                 'provinsi' => [
                     'only' => ['nama_provinsi'],
-                    'alias' => ['nama_provinsi' => 'nama_provinsi']
                 ]
             ],
             'labels' => [
                 'id' => 'ID',
                 'nama_kota' => 'Kota',
-                'nama_provinsi' => 'Provinsi',
+                'provinsi_nama_provinsi' => 'Provinsi',
             ],
-            'searchable' => ['nama_kota', 'provinsi.nama_provinsi'],
+            'searchable' => [
+                ['field' => 'nama_kota', 'label' => 'Kota'],
+                ['field' => 'provinsi.nama_provinsi', 'label' => 'Provinsi']
+            ],
             'sortable' => ['id', 'nama_kota', 'nama_provinsi'],
             'hidden' => ['provinsi_id', 'created_at', 'updated_at'],
         ];

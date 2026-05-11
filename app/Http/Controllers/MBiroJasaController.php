@@ -57,7 +57,13 @@ class MBiroJasaController extends BaseApiController
                 'company' => 'Perusahaan',
                 'no_hp' => 'Nomor HP',
             ],
-            'searchable' => ['name', 'company'],
+            'searchable' => [[
+                'field' => 'name',
+                'label' => 'Nama Biro Jasa'
+            ], [
+                'field' => 'company',
+                'label' => 'Perusahaan'
+            ]],
             'sortable' => ['name', 'company'],
         ];
     }

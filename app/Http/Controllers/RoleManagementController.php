@@ -47,7 +47,10 @@ class RoleManagementController extends Controller
         return [
             'primary_key' => 'id',
             'labels' => [],
-            'searchable' => ['name'],
+            'searchable' => [[
+                'field' => 'name',
+                'label' => 'Name'
+            ]],
             'sortable' => ['name'],
             'hidden' => ['id', 'created_at', 'updated_at'],
         ];

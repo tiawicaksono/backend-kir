@@ -108,7 +108,20 @@ class ApiIntegrationController extends Controller
                     'issuance_name' => 'Nama',
                     'issuance_desc' => 'Deskripsi',
                 ],
-                'searchable' => ['issuance_code', 'issuance_name', 'issuance_desc'],
+                'searchable' => [
+                    [
+                        'field' => 'issuance_name',
+                        'label' => 'Nama'
+                    ],
+                    [
+                        'field' => 'issuance_code',
+                        'label' => 'Kode'
+                    ],
+                    [
+                        'field' => 'issuance_desc',
+                        'label' => 'Deskripsi'
+                    ]
+                ],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -120,7 +133,16 @@ class ApiIntegrationController extends Controller
                     'kelasjalan_name' => 'Nama',
                     'kelasjalan_desc' => 'Deskripsi',
                 ],
-                'searchable' => ['kelasjalan_code', 'kelasjalan_name'],
+                'searchable' => [
+                    [
+                        'field' => 'kelasjalan_code',
+                        'label' => 'Kode'
+                    ],
+                    [
+                        'field' => 'kelasjalan_name',
+                        'label' => 'Nama'
+                    ]
+                ],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -132,7 +154,16 @@ class ApiIntegrationController extends Controller
                     'area_code' => 'Kode',
                     'area_name' => 'Nama',
                 ],
-                'searchable' => ['area_code', 'area_name'],
+                'searchable' => [
+                    [
+                        'field' => 'area_code',
+                        'label' => 'Kode'
+                    ],
+                    [
+                        'field' => 'area_name',
+                        'label' => 'Nama'
+                    ]
+                ],
                 // 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -142,7 +173,12 @@ class ApiIntegrationController extends Controller
                     'fuel_id' => 'ID',
                     'fuel_name' => 'Nama',
                 ],
-                'searchable' => ['fuel_name'],
+                'searchable' => [
+                    [
+                        'field' => 'fuel_name',
+                        'label' => 'Nama'
+                    ]
+                ],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -156,7 +192,16 @@ class ApiIntegrationController extends Controller
                     'pangkat' => 'Pangkat',
                     'identity_number' => 'NIP',
                 ],
-                'searchable' => ['full_name', 'job_name'],
+                'searchable' => [
+                    [
+                        'field' => 'full_name',
+                        'label' => 'Nama'
+                    ],
+                    [
+                        'field' => 'job_name',
+                        'label' => 'Jabatan'
+                    ]
+                ],
                 // 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -166,7 +211,12 @@ class ApiIntegrationController extends Controller
                     'vehicle_brand_id' => 'ID',
                     'vehicle_brand_name' => 'Nama',
                 ],
-                'searchable' => ['vehicle_brand_name'],
+                'searchable' => [
+                    [
+                        'field' => 'vehicle_brand_name',
+                        'label' => 'Nama'
+                    ]
+                ],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -187,8 +237,14 @@ class ApiIntegrationController extends Controller
                 ],
 
                 'searchable' => [
-                    'vehicle_varian_type_name',
-                    'merk.vehicle_brand_name'
+                    [
+                        'field' => 'vehicle_varian_type_name',
+                        'label' => 'Nama'
+                    ],
+                    [
+                        'field' => 'merk.vehicle_brand_name',
+                        'label' => 'Merk'
+                    ]
                 ],
 
                 'hidden' => ['vehicle_brand_id', 'created_at', 'updated_at'],
@@ -211,9 +267,18 @@ class ApiIntegrationController extends Controller
                 ],
 
                 'searchable' => [
-                    'vehicle_varian_name',
-                    'varian.vehicle_varian_type_name',
-                    'varian.merk.vehicle_brand_name'
+                    [
+                        'field' => 'vehicle_varian_name',
+                        'label' => 'Nama'
+                    ],
+                    [
+                        'field' => 'varian.vehicle_varian_type_name',
+                        'label' => 'Tipe Varians'
+                    ],
+                    [
+                        'field' => 'varian.merk.vehicle_brand_name',
+                        'label' => 'Merk'
+                    ]
                 ],
 
                 'hidden' => ['created_at', 'updated_at'],
@@ -225,7 +290,12 @@ class ApiIntegrationController extends Controller
                     'vehicle_type_id' => 'ID',
                     'vehicle_type_name' => 'Nama',
                 ],
-                'searchable' => ['vehicle_type_name'],
+                'searchable' => [
+                    [
+                        'field' => 'vehicle_type_name',
+                        'label' => 'Nama'
+                    ]
+                ],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 
@@ -241,7 +311,16 @@ class ApiIntegrationController extends Controller
                     'vehicle_sub_id' => 'ID',
                     'vehicle_sub_name' => 'Nama',
                 ],
-                'searchable' => ['vehicle_sub_name', 'masterJenisKendaraan.vehicle_type_name'],
+                'searchable' => [
+                    [
+                        'field' => 'vehicle_sub_name',
+                        'label' => 'Nama'
+                    ],
+                    [
+                        'field' => 'masterJenisKendaraan.vehicle_type_name',
+                        'label' => 'Jenis Kendaraan'
+                    ]
+                ],
                 'hidden' => ['created_at', 'updated_at'],
             ],
 

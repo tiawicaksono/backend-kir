@@ -50,15 +50,12 @@ class MasterKelurahanController extends BaseApiController
             'only' => [
                 'kecamatan' => [
                     'only' => ['nama_kecamatan'],
-                    'alias' => ['nama_kecamatan' => 'nama_kecamatan'],
                     'children' => [
                         'kota' => [
                             'only' => ['nama_kota'],
-                            'alias' => ['nama_kota' => 'nama_kota'],
                             'children' => [
                                 'provinsi' => [
                                     'only' => ['nama_provinsi'],
-                                    'alias' => ['nama_provinsi' => 'nama_provinsi']
                                 ]
                             ]
                         ]
@@ -68,11 +65,23 @@ class MasterKelurahanController extends BaseApiController
             'labels' => [
                 'id' => 'ID',
                 'nama_kelurahan' => 'Kelurahan',
-                'nama_kecamatan' => 'Kecamatan',
-                'nama_kota' => 'Kota',
-                'nama_provinsi' => 'Provinsi',
+                'kecamatan_nama_kecamatan' => 'Kecamatan',
+                'kecamatan_kota_nama_kota' => 'Kota',
+                'kecamatan_kota_provinsi_nama_provinsi' => 'Provinsi',
             ],
-            'searchable' => ['nama_kelurahan', 'kecamatan.nama_kecamatan', 'kecamatan.kota.nama_kota', 'kecamatan.kota.provinsi.nama_provinsi'],
+            'searchable' => [[
+                'field' => 'nama_kelurahan',
+                'label' => 'Kelurahan'
+            ], [
+                'field' => 'kecamatan.nama_kecamatan',
+                'label' => 'Kecamatan'
+            ], [
+                'field' => 'kecamatan.kota.nama_kota',
+                'label' => 'Kota'
+            ], [
+                'field' => 'kecamatan.kota.provinsi.nama_provinsi',
+                'label' => 'Provinsi'
+            ]],
             'sortable' => ['id', 'nama_kelurahan', 'nama_kecamatan', 'nama_kota'],
             'hidden' => ['kecamatan_id', 'created_at', 'updated_at'],
         ];

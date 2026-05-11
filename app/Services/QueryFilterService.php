@@ -37,18 +37,71 @@ class QueryFilterService
             // 🔥 pakai searchable kalau ada
             if (!empty($config['searchable'])) {
 
-                $query->where(function ($q) use ($config, $keyword, $table) {
+                $query->where(function ($q) use ($config, $keyword, $table, $request) {
 
-                    $q->whereRaw('1=0'); // 🔥 penting untuk OR chaining
+                    $q->whereRaw('1=0');
 
-                    foreach ($config['searchable'] as $field) {
+                    /**
+                     * =========================================
+                     * 🔥 FILTER SEARCHABLE BY search_by
+                     * =========================================
+                     */
+                    $searchables = $config['searchable'];
 
-                        // 🔥 RELATION (kota.nama_kota)
+                    if ($request->filled('search_by')) {
+
+                        $searchables = array_filter(
+                            $searchables,
+                            function ($item) use ($request) {
+
+                                $field = is_array($item)
+                                    ? ($item['field'] ?? null)
+                                    : $item;
+
+                                return $field === $request->search_by;
+                            }
+                        );
+                    }
+
+                    /**
+                     * =========================================
+                     * 🔥 LOOP SEARCHABLE
+                     * =========================================
+                     */
+                    foreach ($searchables as $item) {
+
+                        /**
+                         * support:
+                         * - string
+                         * - object config
+                         */
+                        $field = is_array($item)
+                            ? ($item['field'] ?? null)
+                            : $item;
+
+                        if (!$field) continue;
+
+                        $field = trim($field);
+
+                        /**
+                         * =====================================
+                         * 🔥 RELATION SEARCH
+                         * =====================================
+                         */
                         if (str_contains($field, '.')) {
 
-                            self::applyWhereHas($q, $field, $keyword);
+                            self::applyWhereHas(
+                                $q,
+                                $field,
+                                $keyword
+                            );
                         } else {
-                            // 🔥 KOLOM UTAMA
+
+                            /**
+                             * =================================
+                             * 🔥 ROOT COLUMN SEARCH
+                             * =================================
+                             */
                             $q->orWhereRaw(
                                 "REPLACE(LOWER(CAST($table.$field AS TEXT)), ' ', '') LIKE ?",
                                 ["%{$keyword}%"]
@@ -57,14 +110,21 @@ class QueryFilterService
                     }
                 });
             } else {
-                // 🔙 fallback (tanpa searchable)
+
+                /**
+                 * =========================================
+                 * 🔙 FALLBACK SEARCH
+                 * =========================================
+                 */
                 $query->where(function ($q) use ($validColumns, $keyword, $table) {
 
                     $q->whereRaw('1=0');
 
                     foreach ($validColumns as $col) {
 
-                        if (in_array($col, ['created_at', 'updated_at'])) continue;
+                        if (in_array($col, ['created_at', 'updated_at'])) {
+                            continue;
+                        }
 
                         $q->orWhereRaw(
                             "REPLACE(LOWER(CAST($table.$col AS TEXT)), ' ', '') LIKE ?",

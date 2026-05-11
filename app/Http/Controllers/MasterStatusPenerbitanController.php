@@ -92,7 +92,7 @@ class MasterStatusPenerbitanController extends BaseApiController
                 'issuance_id' => 'ID',
                 'issuance_name' => 'Status Penerbitan'
             ],
-            'searchable' => ['issuance_name'],
+            'searchable' => [['field' => 'issuance_name', 'label' => 'Status Penerbitan']],
             'sortable' => ['issuance_id', 'issuance_code', 'issuance_name'],
             'hidden' => ['issuance_desc', 'created_at', 'updated_at'],
         ];

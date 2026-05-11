@@ -73,7 +73,16 @@ class UserManagementController extends Controller
         return [
             'primary_key' => 'id',
             'labels' => [],
-            'searchable' => ['name', 'email'],
+            'searchable' => [
+                [
+                    'field' => 'name',
+                    'label' => 'Name'
+                ],
+                [
+                    'field' => 'email',
+                    'label' => 'Email'
+                ]
+            ],
             'sortable' => ['name', 'email'],
             'hidden' => ['id', 'email_verified_at', 'remember_token', 'password', 'created_at', 'updated_at'],
         ];
