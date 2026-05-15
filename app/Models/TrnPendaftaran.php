@@ -31,6 +31,8 @@ class TrnPendaftaran extends Model
         'is_kartu_hilang',
         'no_kartu_hilang',
         'status',
+        'petugas_id',
+        'petugas_nama',
     ];
 
     protected $casts = [
@@ -49,6 +51,8 @@ class TrnPendaftaran extends Model
         'is_kartu_hilang' => 'boolean',
         'no_kartu_hilang' => 'string',
         'status' => 'string',
+        'petugas_id' => 'integer',
+        'petugas_nama' => 'string',
     ];
 
     /*
@@ -79,5 +83,11 @@ class TrnPendaftaran extends Model
     public function retribusi()
     {
         return $this->hasOne(TrnPendaftaranRetribusi::class, 'pendaftaran_id');
+    }
+
+    // 🔗 ke user/petugas
+    public function petugas()
+    {
+        return $this->belongsTo(User::class, 'petugas_id');
     }
 }
