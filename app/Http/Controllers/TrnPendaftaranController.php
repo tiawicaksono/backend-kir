@@ -410,6 +410,7 @@ class TrnPendaftaranController extends Controller
     public function index(Request $request)
     {
         $model = TrnPendaftaran::class;
+        $user = $request->user();
 
         $query = $model::with([
             'kendaraan:id,no_uji,no_kendaraan,nama_pemilik',
@@ -419,6 +420,13 @@ class TrnPendaftaranController extends Controller
 
         $config = $this->getTableConfig();
 
+        // =========================================
+        // DEFAULT BY CREATED
+        // =========================================
+        if (!$user->hasRole(1)) {
+
+            $query->where('petugas_id', $user->id);
+        }
         // =========================================
         // DEFAULT DATE = TODAY
         // =========================================
@@ -494,6 +502,7 @@ class TrnPendaftaranController extends Controller
 
                 'statusPenerbitan' => [
                     'only' => [
+                        'issuance_id',
                         'issuance_name',
                     ],
                 ],
@@ -565,7 +574,65 @@ class TrnPendaftaranController extends Controller
      */
     public function update(Request $request, TrnPendaftaran $pendaftaran)
     {
-        //
+        DB::beginTransaction();
+
+        try {
+
+            $pendaftaran->update([
+
+                'status_penerbitan_id' =>
+                $request->status_penerbitan_id,
+
+                'tanggal_uji' =>
+                $request->tanggal_uji,
+            ]);
+
+            DB::commit();
+
+            // =====================================
+            // RELOAD RELATION
+            // =====================================
+
+            $pendaftaran = TrnPendaftaran::query()
+                ->with([
+                    'kendaraan',
+                    'statusPenerbitan',
+                    'petugas',
+                ])
+                ->findOrFail($pendaftaran->id);
+
+            // =====================================
+            // TRANSFORM
+            // =====================================
+
+            $data = [
+
+                'id' => $pendaftaran->id,
+
+                'status_penerbitan_issuance_id' =>
+                $pendaftaran->statusPenerbitan?->issuance_id,
+
+                'tanggal_uji' =>
+                $pendaftaran->tanggal_uji,
+
+                'status_penerbitan_issuance_name' =>
+                $pendaftaran->statusPenerbitan?->issuance_name,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil update',
+                'data' => $data,
+            ]);
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

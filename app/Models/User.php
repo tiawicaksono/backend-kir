@@ -147,4 +147,13 @@ class User extends Authenticatable
         // return root only
         return array_values(array_filter($lookup, fn($m) => $m->parent_id === null));
     }
+
+    public function hasRole($roles): bool
+    {
+        $roles = is_array($roles) ? $roles : [$roles];
+
+        return $this->roles()
+            ->whereIn('role_id', $roles)
+            ->exists();
+    }
 }
