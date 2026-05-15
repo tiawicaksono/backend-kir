@@ -344,12 +344,54 @@ class TrnPendaftaranController extends Controller
                 ]);
             }
 
+            // =====================================================
+            // RELOAD WITH RELATION
+            // =====================================================
+
+            $pendaftaran = TrnPendaftaran::query()
+                ->with([
+                    'kendaraan',
+                    'statusPenerbitan',
+                    'petugas',
+                ])
+                ->findOrFail($pendaftaran->id);
+
+            // =====================================================
+            // TRANSFORM FOR FE TABLE
+            // =====================================================
+
+            $data = [
+
+                'id' => $pendaftaran->id,
+
+                'no_pendaftaran_harian' =>
+                $pendaftaran->no_pendaftaran_harian,
+
+                'tanggal_uji' =>
+                $pendaftaran->tanggal_uji,
+
+                'kendaraan_no_uji' =>
+                $pendaftaran->kendaraan?->no_uji,
+
+                'kendaraan_no_kendaraan' =>
+                $pendaftaran->kendaraan?->no_kendaraan,
+
+                'kendaraan_nama_pemilik' =>
+                $pendaftaran->kendaraan?->nama_pemilik,
+
+                'status_penerbitan_issuance_name' =>
+                $pendaftaran->statusPenerbitan?->issuance_name,
+
+                'petugas_name' =>
+                $pendaftaran->petugas?->name,
+            ];
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Berhasil simpan',
-                'data' => $pendaftaran,
+                'data' => $data,
             ]);
         } catch (\Throwable $e) {
 
@@ -372,6 +414,7 @@ class TrnPendaftaranController extends Controller
         $query = $model::with([
             'kendaraan:id,no_uji,no_kendaraan,nama_pemilik',
             'statusPenerbitan:issuance_id,issuance_name',
+            'petugas:id,name',
         ]);
 
         $config = $this->getTableConfig();
@@ -453,6 +496,12 @@ class TrnPendaftaranController extends Controller
                     'only' => [
                         'issuance_name',
                     ],
+                ],
+
+                'petugas' => [
+                    'only' => [
+                        'name',
+                    ],
                 ]
             ],
 
@@ -465,6 +514,7 @@ class TrnPendaftaranController extends Controller
                 'kendaraan_nama_pemilik' => 'Nama Pemilik',
 
                 'status_penerbitan_issuance_name' => 'Pendaftaran',
+                'petugas_name' => 'Petugas',
             ],
 
             /**
@@ -491,7 +541,14 @@ class TrnPendaftaranController extends Controller
                     'field' => 'statusPenerbitan.issuance_name',
                     'label' => 'Status Penerbitan',
                 ],
-
+                [
+                    'field' => 'tanggal_uji',
+                    'label' => 'Tanggal Uji',
+                ],
+                [
+                    'field' => 'petugas.name',
+                    'label' => 'Petugas',
+                ]
             ],
 
             'sortable' => [
@@ -499,16 +556,14 @@ class TrnPendaftaranController extends Controller
                 'no_pendaftaran_harian'
             ],
 
-            'hidden' => [
-                'status_penerbitan_issuance_id',
-            ],
+            'hidden' => [],
         ];
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, TrnPendaftaran $tblPendaftaran)
+    public function update(Request $request, TrnPendaftaran $pendaftaran)
     {
         //
     }
@@ -516,8 +571,28 @@ class TrnPendaftaranController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(TrnPendaftaran $tblPendaftaran)
+    public function destroy(TrnPendaftaran $pendaftaran)
     {
-        //
+        DB::beginTransaction();
+
+        try {
+
+            $pendaftaran->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil hapus',
+            ]);
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
