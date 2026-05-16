@@ -26,6 +26,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MKendaraanController;
 use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\RollingAlatController;
+use App\Http\Controllers\TrnPembayaranController;
 use App\Http\Controllers\TrnPendaftaranController;
 use App\Http\Controllers\UserManagementController;
 
@@ -173,8 +174,9 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::get('/pendaftaran/search-kendaraan', [TrnPendaftaranController::class, 'search']);
         Route::apiResource('/pendaftaran', TrnPendaftaranController::class);
 
-        Route::get('/pembayaran', fn() => response()->json(['message' => 'Pembayaran OK']));
-        Route::post('/pembayaran', fn() => response()->json(['message' => 'Create Pembayaran OK']));
+        // PEMBAYARAN
+        Route::apiResource('/pembayaran', TrnPembayaranController::class);
+        Route::patch('/pembayaran/{id}/toggle-bayar', [TrnPembayaranController::class, 'toggleBayar']);
     });
 
     /**
