@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Helpers\FlattenHelper;
 use App\Models\TrnPendaftaran;
 use App\Models\TrnPendaftaranRetribusi;
-use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
 
 class TrnPembayaranController extends Controller
@@ -72,6 +71,16 @@ class TrnPembayaranController extends Controller
                 'sort_by' => $primaryKey,
                 'sort_order' => 'desc',
             ]);
+        }
+
+        // APPLY SORT
+        $sortable = $config['sortable'] ?? [];
+
+        $sortBy = $request->sort_by;
+        $sortOrder = $request->sort_order ?? 'asc';
+
+        if ($sortBy && in_array($sortBy, $sortable)) {
+            $query->orderBy($sortBy, $sortOrder);
         }
 
         $perPage = $request->limit ?? 10;
