@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FlattenHelper;
-use App\Models\MKendaraan;
 use App\Models\TrnPendaftaran;
-use App\Models\TrnPendaftaranRekomendasi;
-use App\Models\TrnPendaftaranRetribusi;
 use App\Services\KemenhubService;
 use App\Services\PendaftaranService;
 use App\Services\QueryFilterService;
@@ -15,22 +12,31 @@ use Illuminate\Support\Facades\DB;
 
 class TrnPendaftaranController extends Controller
 {
+    public function __construct(
+        private PendaftaranService $pendaftaranService
+    ) {}
 
-    public function search(Request $request, KemenhubService $kemenhub, PendaftaranService $pendaftaranService)
-    {
+    // =====================================================
+    // SEARCH
+    // =====================================================
+    public function search(
+        Request $request,
+        KemenhubService $kemenhub
+    ) {
         $qRaw = $request->q;
 
         $q = strtoupper(preg_replace('/[^A-Z0-9]/', '', $qRaw));
         $status = (int) $request->status_penerbitan_id;
 
         // =========================
-        // 🚀 KHUSUS 7 / 8
+        // KHUSUS 7 / 8
         // =========================
         if (in_array($status, [7, 8])) {
 
             $statusKeluar = $status === 7 ? 5 : 6;
 
-            $dataKemenhub = $kemenhub->checkPengujianKeluar($q, $statusKeluar);
+            $dataKemenhub = $kemenhub
+                ->checkPengujianKeluar($q, $statusKeluar);
 
             // ❌ tidak ada di pusat
             if (!$dataKemenhub) {
@@ -41,7 +47,8 @@ class TrnPendaftaranController extends Controller
             }
 
             // 🔍 cek lokal
-            $kendaraan = $pendaftaranService->findLocal($q, $qRaw);
+            $kendaraan = $this->pendaftaranService
+                ->findLocal($q, $qRaw);
 
             // =========================
             // ✅ kalau lokal ada
@@ -49,7 +56,9 @@ class TrnPendaftaranController extends Controller
             if ($kendaraan) {
 
                 // 🚫 cek sudah daftar hari ini
-                if ($pendaftaranService->isAlreadyRegisteredToday($kendaraan->id)) {
+                if ($this->pendaftaranService
+                    ->isAlreadyRegisteredToday($kendaraan->id)
+                ) {
                     return response()->json([
                         'source' => 'local',
                         'found' => true,
@@ -66,30 +75,24 @@ class TrnPendaftaranController extends Controller
                 ]);
             }
 
-            // =========================
-            // 🔥 kalau tidak ada lokal → auto draft
-            // =========================
-            // $mapped = $kemenhub->mapToKendaraan($dataKemenhub);
-
-            // $kendaraan = $pendaftaranService->createDraftFromKemenhub($mapped, $status);
-
-            $kendaraan = $kemenhub->mapToKendaraan($dataKemenhub);
-
             return response()->json([
                 'source' => 'kementrian',
                 'found' => true,
-                'data' => $kendaraan
+                'data' => $kemenhub->mapToKendaraan($dataKemenhub)
             ]);
         }
 
         // =========================
-        // 🟢 SELAIN 7 / 8
+        // NORMAL SEARCH
         // =========================
-        $kendaraan = $pendaftaranService->findLocal($q, $qRaw);
+        $kendaraan = $this->pendaftaranService
+            ->findLocal($q, $qRaw);
 
         if ($kendaraan) {
 
-            if ($pendaftaranService->isAlreadyRegisteredToday($kendaraan->id)) {
+            if ($this->pendaftaranService
+                ->isAlreadyRegisteredToday($kendaraan->id)
+            ) {
                 return response()->json([
                     'source' => 'local',
                     'found' => true,
@@ -112,253 +115,17 @@ class TrnPendaftaranController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    // =====================================================
+    // STORE
+    // =====================================================
     public function store(Request $request)
     {
-        DB::beginTransaction();
-        $user = $request->user();
         try {
-
-            // =====================================================
-            // ISSUANCE
-            // =====================================================
-
-            $issuanceId = (int) $request->status_penerbitan_id;
-
-            // =====================================================
-            // CEK DUPLIKAT HARI INI
-            // =====================================================
-
-            $existing = TrnPendaftaran::query()
-                ->where('kendaraan_id', $request->kendaraan_id)
-                ->where('status_penerbitan_id', $issuanceId)
-                ->whereDate('created_at', today())
-                ->first();
-
-            if ($existing) {
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kendaraan sudah terdaftar hari ini',
-                ], 422);
-            }
-
-            // =====================================================
-            // GENERATE NOMOR HARIAN
-            // reset setiap hari
-            // =====================================================
-
-            $lastDaily = TrnPendaftaran::query()
-                ->whereDate('created_at', today())
-                ->latest('id')
-                ->first();
-
-            $dailyNumber = 1;
-
-            if ($lastDaily?->no_pendaftaran_harian) {
-
-                $dailyNumber =
-                    ((int) $lastDaily->no_pendaftaran_harian) + 1;
-            }
-
-            $noPendaftaranHarian = str_pad(
-                $dailyNumber,
-                5,
-                '0',
-                STR_PAD_LEFT
-            );
-
-            // =====================================================
-            // GENERATE NOMOR TAHUNAN
-            // reset setiap tahun
-            // =====================================================
-
-            $currentYear = now()->year;
-
-            $lastYearly = TrnPendaftaran::query()
-                ->whereYear('created_at', $currentYear)
-                ->latest('id')
-                ->first();
-
-            $yearlyNumber = 1;
-
-            if ($lastYearly?->no_pendaftaran_tahunan) {
-
-                preg_match(
-                    '/(\d+)$/',
-                    $lastYearly->no_pendaftaran_tahunan,
-                    $matches
+            $pendaftaran = $this->pendaftaranService
+                ->storePendaftaran(
+                    $request->all(),
+                    $request->user()
                 );
-
-                $yearlyNumber =
-                    ((int) ($matches[1] ?? 0)) + 1;
-            }
-
-            $noPendaftaranTahunan =
-                'DISHUB-PKB-' .
-                str_pad(
-                    $yearlyNumber,
-                    5,
-                    '0',
-                    STR_PAD_LEFT
-                );
-
-            // =====================================================
-            // KENDARAAN
-            // =====================================================
-
-            $kendaraanId = $request->kendaraan_id;
-
-            // =====================================================
-            // DAFTAR BARU
-            // insert kendaraan
-            // =====================================================
-
-            if ($issuanceId === 1) {
-
-                $kendaraan = MKendaraan::create([
-
-                    'no_uji' => now()->format('YmdHis'),
-
-                    'no_kendaraan' => $request->no_kendaraan,
-                    'no_mesin' => $request->no_mesin,
-                    'no_rangka' => $request->no_rangka,
-
-                    'nama_pemilik' => $request->nama_pemilik,
-                    'identitas' => $request->identitas,
-                    'no_identitas' => $request->no_identitas,
-                    'alamat' => $request->alamat,
-                    'no_hp' => $request->no_hp,
-
-                    'provinsi_id' => $request->provinsi_id,
-                    'kota_id' => $request->kota_id,
-                    'kecamatan_id' => $request->kecamatan_id,
-                    'kelurahan_id' => $request->kelurahan_id,
-                ]);
-
-                $kendaraanId = $kendaraan->id;
-            }
-
-            // =====================================================
-            // SELAIN DAFTAR BARU
-            // update kendaraan
-            // =====================================================
-
-            else {
-
-                $kendaraan = MKendaraan::findOrFail($kendaraanId);
-
-                $kendaraan->update([
-
-                    'no_kendaraan' => $request->no_kendaraan,
-                    'no_mesin' => $request->no_mesin,
-                    'no_rangka' => $request->no_rangka,
-
-                    'nama_pemilik' => $request->nama_pemilik,
-                    'identitas' => $request->identitas,
-                    'no_identitas' => $request->no_identitas,
-                    'alamat' => $request->alamat,
-                    'no_hp' => $request->no_hp,
-
-                    'provinsi_id' => $request->provinsi_id,
-                    'kota_id' => $request->kota_id,
-                    'kecamatan_id' => $request->kecamatan_id,
-                    'kelurahan_id' => $request->kelurahan_id,
-                ]);
-            }
-
-            // =====================================================
-            // PENDAFTARAN
-            // =====================================================
-
-            $pendaftaran = TrnPendaftaran::create([
-
-                'kendaraan_id' => $kendaraanId,
-                'petugas_id' => $user->id,
-                'petugas_nama' => $user->name,
-                'status_penerbitan_id' => $issuanceId,
-
-                'no_pendaftaran_harian' => $noPendaftaranHarian,
-
-                'no_pendaftaran_tahunan' => $noPendaftaranTahunan,
-
-                'tanggal_pendaftaran' => now(),
-
-                'tanggal_uji' => $request->tanggal_uji,
-
-                'tanggal_mati_uji' => $request->tanggal_mati_uji,
-
-                'is_dikuasakan' => $request->is_dikuasakan ?? false,
-
-                'biro_jasa_id' => $request->biro_jasa_id,
-
-                'nama_pengurus' => $request->nama_pengurus,
-
-                'company_pengurus' => $request->company_pengurus,
-
-                'no_hp_pengurus' => $request->no_hp_pengurus,
-
-                'is_kartu_hilang' => $issuanceId === 4,
-
-                'no_kartu_hilang' => $request->no_kartu_hilang,
-
-                'status' => true,
-            ]);
-
-            // =====================================================
-            // RETRIBUSI
-            // =====================================================
-
-            TrnPendaftaranRetribusi::create([
-
-                'pendaftaran_id' => $pendaftaran->id,
-
-                'b_daftar' => 0,
-
-                'b_cetak' => 0,
-
-                'b_denda' => 0,
-
-                'jumlah_retribusi' => 0,
-
-                'status_pembayaran' => true,
-
-                'virtual_account' => null,
-            ]);
-
-            // =====================================================
-            // NUMPANG / MUTASI KELUAR
-            // =====================================================
-
-            if (in_array($issuanceId, [5, 6])) {
-
-                TrnPendaftaranRekomendasi::create([
-
-                    'pendaftaran_id' => $pendaftaran->id,
-
-                    'is_mutasi_keluar' => $issuanceId === 6,
-
-                    'is_numpang_keluar' => $issuanceId === 5,
-                ]);
-            }
-
-            // =====================================================
-            // RELOAD WITH RELATION
-            // =====================================================
-
-            $pendaftaran = TrnPendaftaran::query()
-                ->with([
-                    'kendaraan',
-                    'statusPenerbitan',
-                    'petugas',
-                ])
-                ->findOrFail($pendaftaran->id);
-
-            // =====================================================
-            // TRANSFORM FOR FE TABLE
-            // =====================================================
 
             $data = [
 
@@ -379,23 +146,20 @@ class TrnPendaftaranController extends Controller
                 'kendaraan_nama_pemilik' =>
                 $pendaftaran->kendaraan?->nama_pemilik,
 
+                'status_penerbitan_issuance_id' =>
+                $pendaftaran->statusPenerbitan?->issuance_id,
                 'status_penerbitan_issuance_name' =>
                 $pendaftaran->statusPenerbitan?->issuance_name,
 
                 'petugas_name' =>
                 $pendaftaran->petugas?->name,
             ];
-
-            DB::commit();
-
             return response()->json([
                 'success' => true,
                 'message' => 'Berhasil simpan',
                 'data' => $data,
             ]);
         } catch (\Throwable $e) {
-
-            DB::rollBack();
 
             return response()->json([
                 'success' => false,
@@ -404,9 +168,9 @@ class TrnPendaftaranController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
+    // =====================================================
+    // INDEX
+    // =====================================================
     public function index(Request $request)
     {
         $model = TrnPendaftaran::class;
@@ -424,7 +188,6 @@ class TrnPendaftaranController extends Controller
         // DEFAULT BY CREATED
         // =========================================
         if (!$user->hasRole(1)) {
-
             $query->where('petugas_id', $user->id);
         }
         // =========================================
@@ -432,7 +195,6 @@ class TrnPendaftaranController extends Controller
         // =========================================
 
         $date = $request->date ?? today()->toDateString();
-
         $query->whereDate('tanggal_pendaftaran', $date);
 
         // =========================================
@@ -444,7 +206,7 @@ class TrnPendaftaranController extends Controller
         if (!$request->filled('sort_by') && $primaryKey) {
 
             $request->merge([
-                'sort_by' => $primaryKey,
+                'sort_by' => $config['primary_key'],
                 'sort_order' => 'desc',
             ]);
         }
@@ -456,12 +218,7 @@ class TrnPendaftaranController extends Controller
             $config
         );
 
-        $perPage = $request->limit ?? 10;
-        $result = $query->paginate($perPage);
-
-        // =========================================
-        // FLATTEN
-        // =========================================
+        $result = $query->paginate($request->limit ?? 10);
 
         $data = FlattenHelper::flatten(
             $result->items(),
@@ -470,21 +227,96 @@ class TrnPendaftaranController extends Controller
 
         return response()->json([
             'data' => $data,
-
             'meta' => [
                 'current_page' => $result->currentPage(),
                 'per_page' => $result->perPage(),
                 'total' => $result->total(),
             ],
-
             'config' => $config,
         ]);
     }
 
+    // =====================================================
+    // UPDATE
+    // =====================================================
+    public function update(Request $request, TrnPendaftaran $pendaftaran)
+    {
+        try {
+
+            $updated = $this->pendaftaranService
+                ->updatePendaftaran(
+                    $pendaftaran,
+                    $request->all()
+                );
+
+            $data = [
+                'id' => $updated->id,
+                'status_penerbitan_issuance_id' =>
+                $updated->statusPenerbitan?->issuance_id,
+                'tanggal_uji' => $updated->tanggal_uji,
+                'status_penerbitan_issuance_name' =>
+                $updated->statusPenerbitan?->issuance_name,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil update',
+                'data' => $data,
+            ]);
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // =====================================================
+    // DESTROY
+    // =====================================================
+    public function destroy(TrnPendaftaran $pendaftaran)
+    {
+        DB::beginTransaction();
+
+        try {
+
+            $check = $this->pendaftaranService
+                ->canDeletePendaftaran($pendaftaran->id);
+
+            if (!$check['allowed']) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $check['message'],
+                ], 422);
+            }
+
+            $pendaftaran->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil hapus',
+            ]);
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // =====================================================
+    // CONFIG
+    // =====================================================
     private function getTableConfig()
     {
         return [
-
             'primary_key' => 'id',
             'only_fields' => [
                 'id',
@@ -499,14 +331,12 @@ class TrnPendaftaranController extends Controller
                         'nama_pemilik',
                     ],
                 ],
-
                 'statusPenerbitan' => [
                     'only' => [
                         'issuance_id',
                         'issuance_name',
                     ],
                 ],
-
                 'petugas' => [
                     'only' => [
                         'name',
@@ -517,11 +347,9 @@ class TrnPendaftaranController extends Controller
             'labels' => [
                 'no_pendaftaran_harian' => 'No Antrian',
                 'tanggal_uji' => 'Tanggal Uji',
-
                 'kendaraan_no_uji' => 'No Uji',
                 'kendaraan_no_kendaraan' => 'No Kendaraan',
                 'kendaraan_nama_pemilik' => 'Nama Pemilik',
-
                 'status_penerbitan_issuance_name' => 'Pendaftaran',
                 'petugas_name' => 'Petugas',
             ],
@@ -564,102 +392,6 @@ class TrnPendaftaranController extends Controller
                 'id',
                 'no_pendaftaran_harian'
             ],
-
-            'hidden' => [],
         ];
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, TrnPendaftaran $pendaftaran)
-    {
-        DB::beginTransaction();
-
-        try {
-
-            $pendaftaran->update([
-
-                'status_penerbitan_id' =>
-                $request->status_penerbitan_id,
-
-                'tanggal_uji' =>
-                $request->tanggal_uji,
-            ]);
-
-            DB::commit();
-
-            // =====================================
-            // RELOAD RELATION
-            // =====================================
-
-            $pendaftaran = TrnPendaftaran::query()
-                ->with([
-                    'kendaraan',
-                    'statusPenerbitan',
-                    'petugas',
-                ])
-                ->findOrFail($pendaftaran->id);
-
-            // =====================================
-            // TRANSFORM
-            // =====================================
-
-            $data = [
-
-                'id' => $pendaftaran->id,
-
-                'status_penerbitan_issuance_id' =>
-                $pendaftaran->statusPenerbitan?->issuance_id,
-
-                'tanggal_uji' =>
-                $pendaftaran->tanggal_uji,
-
-                'status_penerbitan_issuance_name' =>
-                $pendaftaran->statusPenerbitan?->issuance_name,
-            ];
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Berhasil update',
-                'data' => $data,
-            ]);
-        } catch (\Throwable $e) {
-
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(TrnPendaftaran $pendaftaran)
-    {
-        DB::beginTransaction();
-
-        try {
-
-            $pendaftaran->delete();
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Berhasil hapus',
-            ]);
-        } catch (\Throwable $e) {
-
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
     }
 }

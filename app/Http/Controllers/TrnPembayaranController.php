@@ -191,8 +191,6 @@ class TrnPembayaranController extends Controller
                 'id',
                 'no_pendaftaran_harian'
             ],
-
-            'hidden' => [],
         ];
     }
 
