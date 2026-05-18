@@ -183,24 +183,59 @@ class TrnRekomendasiController extends Controller
     /**
      * SHOW
      */
-    public function show(
-        TrnPendaftaranRekomendasi $rekomendasi
-    ) {
-        return response()->json([
-            'data' => $rekomendasi->load([
-                'pendaftaran.kendaraan',
+    public function show($id)
+    {
+        $data = TrnPendaftaranRekomendasi::query()
+            ->with([
+                'pendaftaran.kendaraan:id,no_uji,no_kendaraan,nama_pemilik',
                 'area',
-            ]),
+            ])
+            ->where('pendaftaran_id', $id)
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'pendaftaran_id' => $data->pendaftaran_id,
+                'no_surat_rekomendasi' => $data->no_surat_rekomendasi,
+
+                'jenis_rekomendasi' => $data->jenis_rekomendasi,
+
+                'no_pemilik_tujuan' => $data->no_pemilik_tujuan,
+                'nama_pemilik_tujuan' => $data->nama_pemilik_tujuan,
+                'alamat_pemilik_tujuan' => $data->alamat_pemilik_tujuan,
+
+                'provinsi_id' => $data->provinsi_id,
+                'kota_id' => $data->kota_id,
+                'kecamatan_id' => $data->kecamatan_id,
+                'kelurahan_id' => $data->kelurahan_id,
+
+                'area_tujuan_id' => $data->area_tujuan_id,
+
+                'is_mutasi_keluar' => $data->is_mutasi_keluar,
+                'is_numpang_keluar' => $data->is_numpang_keluar,
+
+                'status_sinkron' => $data->status_sinkron,
+                'status_sinkron_label' => $data->status_sinkron_label,
+                'keterangan_sinkron' => $data->keterangan_sinkron,
+
+                'pendaftaran_kendaraan_no_uji' =>
+                $data->pendaftaran?->kendaraan?->no_uji,
+
+                'pendaftaran_kendaraan_no_kendaraan' =>
+                $data->pendaftaran?->kendaraan?->no_kendaraan,
+
+                'area_area_code' => $data->area?->area_code,
+                'area_area_name' => $data->area?->area_name,
+            ],
         ]);
     }
 
     /**
      * UPDATE
      */
-    public function update(
-        Request $request,
-        TrnPendaftaranRekomendasi $rekomendasi
-    ) {
+    public function update(Request $request, TrnPendaftaranRekomendasi $rekomendasi)
+    {
 
         $validated = $request->validate([
 

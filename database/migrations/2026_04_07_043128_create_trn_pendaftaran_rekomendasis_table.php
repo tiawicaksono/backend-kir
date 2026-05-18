@@ -20,27 +20,14 @@ return new class extends Migration
             $table->string('no_pemilik_tujuan')->nullable();
             $table->string('nama_pemilik_tujuan')->nullable();
             $table->string('alamat_pemilik_tujuan')->nullable();
-
-            $table->foreignId('provinsi_id')
-                ->nullable()
-                ->constrained('master_provinsis')
-                ->restrictOnDelete();
-
-            $table->foreignId('kota_id')
-                ->nullable()
-                ->constrained('master_kotas')
-                ->restrictOnDelete();
-
-            $table->foreignId('kecamatan_id')
-                ->nullable()
-                ->constrained('master_kecamatans')
-                ->restrictOnDelete();
-
-            $table->foreignId('kelurahan_id')
-                ->nullable()
-                ->constrained('master_kelurahans')
-                ->restrictOnDelete();
-
+            $table->integer('provinsi_id');
+            $table->foreign('provinsi_id')->references('id')->on('master_provinsis')->restrictOnDelete();
+            $table->integer('kota_id');
+            $table->foreign('kota_id')->references('id')->on('master_kotas')->restrictOnDelete();
+            $table->bigInteger('kecamatan_id');
+            $table->foreign('kecamatan_id')->references('id')->on('master_kecamatans')->restrictOnDelete();
+            $table->bigInteger('kelurahan_id');
+            $table->foreign('kelurahan_id')->references('id')->on('master_kelurahans')->restrictOnDelete();
             $table->boolean('is_mutasi_keluar')->default(false);
             $table->boolean('is_numpang_keluar')->default(false);
             $table->integer('area_tujuan_id')->nullable();
