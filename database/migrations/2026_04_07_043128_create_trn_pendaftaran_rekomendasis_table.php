@@ -43,9 +43,9 @@ return new class extends Migration
 
             $table->boolean('is_mutasi_keluar')->default(false);
             $table->boolean('is_numpang_keluar')->default(false);
-            $table->integer('area_asal_id')->nullable();
             $table->integer('area_tujuan_id')->nullable();
-            $table->boolean('status_sinkron')->default(false);
+            $table->foreign('area_tujuan_id')->references('area_id')->on('master_areas')->restrictOnDelete();
+            $table->boolean('status_sinkron')->nullable();
             $table->string('keterangan_sinkron')->nullable();
             $table->timestamps();
         });

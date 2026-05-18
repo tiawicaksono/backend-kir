@@ -23,7 +23,6 @@ class TrnPendaftaranRekomendasi extends Model
         'kelurahan_id',
         'is_mutasi_keluar',
         'is_numpang_keluar',
-        'area_asal_id',
         'area_tujuan_id',
         'status_sinkron',
         'keterangan_sinkron'
@@ -41,11 +40,32 @@ class TrnPendaftaranRekomendasi extends Model
         'kelurahan_id' => 'integer',
         'is_mutasi_keluar' => 'boolean',
         'is_numpang_keluar' => 'boolean',
-        'area_asal_id' => 'integer',
         'area_tujuan_id' => 'integer',
         'status_sinkron' => 'boolean',
         'keterangan_sinkron' => 'string',
     ];
+
+    protected $appends = [
+        'jenis_rekomendasi',
+        'status_sinkron_label',
+    ];
+    public function getJenisRekomendasiAttribute()
+    {
+        return match (true) {
+            (bool) $this->is_mutasi_keluar => 'Mutasi Keluar',
+            (bool) $this->is_numpang_keluar => 'Numpang Keluar',
+            default => '-',
+        };
+    }
+
+    public function getStatusSinkronLabelAttribute()
+    {
+        return match ($this->status_sinkron) {
+            true => 'Sukses',
+            false => 'Gagal',
+            null => 'Belum',
+        };
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -57,5 +77,35 @@ class TrnPendaftaranRekomendasi extends Model
     public function pendaftaran()
     {
         return $this->belongsTo(TrnPendaftaran::class, 'pendaftaran_id');
+    }
+
+    // 🔗 ke provinsi
+    public function provinsi()
+    {
+        return $this->belongsTo(MasterProvinsi::class, 'provinsi_id');
+    }
+
+    // 🔗 ke kota
+    public function kota()
+    {
+        return $this->belongsTo(MasterKota::class, 'kota_id');
+    }
+
+    // 🔗 ke kecamatan
+    public function kecamatan()
+    {
+        return $this->belongsTo(MasterKecamatan::class, 'kecamatan_id');
+    }
+
+    // 🔗 ke kelurahan
+    public function kelurahan()
+    {
+        return $this->belongsTo(MasterKelurahan::class, 'kelurahan_id');
+    }
+
+    // 🔗 ke area tujuan
+    public function area()
+    {
+        return $this->belongsTo(MasterArea::class, 'area_tujuan_id', 'area_id');
     }
 }

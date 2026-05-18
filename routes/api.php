@@ -28,6 +28,7 @@ use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\RollingAlatController;
 use App\Http\Controllers\TrnPembayaranController;
 use App\Http\Controllers\TrnPendaftaranController;
+use App\Http\Controllers\TrnRekomendasiController;
 use App\Http\Controllers\UserManagementController;
 
 /*
@@ -177,6 +178,14 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         // PEMBAYARAN
         Route::apiResource('/pembayaran', TrnPembayaranController::class);
         Route::patch('/pembayaran/{id}/toggle-bayar', [TrnPembayaranController::class, 'toggleBayar']);
+
+
+        // REKOMENDASI
+        Route::apiResource('/rekomendasi', TrnRekomendasiController::class);
+        Route::post('/rekomendasi/{id}/sync', [TrnRekomendasiController::class, 'sync']);
+        Route::post('/rekomendasi/sync-all', [TrnRekomendasiController::class, 'syncAll']);
+        Route::get('/rekomendasi/search-kendaraan',[TrnRekomendasiController::class, 'searchKendaraan']
+    );
     });
 
     /**

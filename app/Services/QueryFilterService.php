@@ -181,8 +181,6 @@ class QueryFilterService
             // 🔹 kolom utama
             if (in_array($sortBy, $validColumns)) {
                 $query->orderBy("$table.$sortBy", $sortDir);
-            } else {
-                $query->orderBy("$table.id", 'desc');
             }
         }
 

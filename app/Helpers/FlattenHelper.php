@@ -2,6 +2,8 @@
 
 namespace App\Helpers;
 
+use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class FlattenHelper
@@ -10,22 +12,35 @@ class FlattenHelper
     {
         return collect($data)->map(function ($item) use ($config) {
 
-            $row = $item->getAttributes();
+            // =========================
+            // ROOT DATA (SAFE MIX)
+            // =========================
+            $row = array_merge(
+                $item->getAttributes(),      // DB fields
+                $item->getRelations(),       // loaded relations
+                $item->toArray()             // accessor + appended
+            );
 
-            // 🔥 FILTER ROOT ONLY
+            // =========================
+            // FILTER ROOT FIELDS
+            // =========================
             if (!empty($config['only_fields'])) {
-                $row = array_intersect_key(
-                    $row,
-                    array_flip($config['only_fields'])
-                );
+
+                $filtered = [];
+
+                foreach ($config['only_fields'] as $field) {
+                    $filtered[$field] = data_get($row, $field, null);
+                }
+
+                $row = $filtered;
             }
 
-            // proses semua relasi
-            foreach ($item->getRelations() as $relation => $relValue) {
+            // =========================
+            // PROCESS RELATIONS CONFIG
+            // =========================
+            foreach (($config['only'] ?? []) as $relation => $relConfig) {
 
-                if (!$relValue) continue;
-
-                $relConfig = $config['only'][$relation] ?? [];
+                $relValue = data_get($item, $relation);
 
                 self::flattenRelation(
                     $relValue,
@@ -36,7 +51,9 @@ class FlattenHelper
                 );
             }
 
-            // 🔥 GLOBAL HIDDEN
+            // =========================
+            // GLOBAL HIDDEN
+            // =========================
             foreach (($config['hidden'] ?? []) as $hidden) {
                 unset($row[$hidden]);
             }
@@ -45,48 +62,92 @@ class FlattenHelper
         });
     }
 
-    private static function flattenRelation($relValue, $relConfig, &$row, $globalConfig, $prefix)
-    {
-        if (!$relValue) return;
-
+    private static function flattenRelation(
+        $relValue,
+        $relConfig,
+        &$row,
+        $globalConfig,
+        $prefix
+    ) {
         $only = $relConfig['only'] ?? null;
         $except = $relConfig['except'] ?? [];
         $alias = $relConfig['alias'] ?? [];
         $children = $relConfig['children'] ?? [];
 
-        // =========================================
-        // 🔥 OBJECT RELATION
-        // =========================================
-        if (is_object($relValue)) {
+        // =========================
+        // NULL RELATION (FORCE OUTPUT)
+        // =========================
+        if (is_null($relValue)) {
 
-            $attributes = $relValue->getAttributes();
+            if ($only && $only !== '*') {
+                foreach ($only as $key) {
 
-            foreach ($attributes as $key => $val) {
+                    $resolvedKey = self::resolveKey(
+                        $globalConfig,
+                        $prefix,
+                        $key,
+                        $alias
+                    );
 
-                if ($val === null) continue;
-
-                // ❌ hidden global
-                if (in_array($key, $globalConfig['hidden'] ?? [])) continue;
-
-                // ❌ except
-                if (!empty($except) && in_array($key, $except)) continue;
-
-                // ❌ only
-                if ($only && $only !== '*') {
-                    if (!in_array($key, $only)) continue;
+                    $row[$resolvedKey] = null;
                 }
-
-                $row[self::resolveKey($globalConfig, $prefix, $key, $alias)] = $val;
             }
 
-            // =========================================
-            // 🔥 RECURSIVE CHILDREN
-            // =========================================
+            return;
+        }
+
+        // =========================
+        // MODEL OBJECT
+        // =========================
+        if ($relValue instanceof Model) {
+
+            $attributes = array_merge(
+                $relValue->getAttributes(),
+                $relValue->toArray() // accessor support
+            );
+
+            if ($only && $only !== '*') {
+
+                foreach ($only as $key) {
+
+                    if (in_array($key, $except)) continue;
+
+                    if (in_array($key, $globalConfig['hidden'] ?? [])) continue;
+
+                    $resolvedKey = self::resolveKey(
+                        $globalConfig,
+                        $prefix,
+                        $key,
+                        $alias
+                    );
+
+                    $row[$resolvedKey] = data_get($attributes, $key, null);
+                }
+            } else {
+
+                foreach ($attributes as $key => $val) {
+
+                    if (in_array($key, $except)) continue;
+
+                    if (in_array($key, $globalConfig['hidden'] ?? [])) continue;
+
+                    $resolvedKey = self::resolveKey(
+                        $globalConfig,
+                        $prefix,
+                        $key,
+                        $alias
+                    );
+
+                    $row[$resolvedKey] = $val;
+                }
+            }
+
+            // =========================
+            // CHILD RELATIONS
+            // =========================
             foreach ($children as $childRelation => $childConfig) {
 
                 $childValue = data_get($relValue, $childRelation);
-
-                if (!$childValue) continue;
 
                 self::flattenRelation(
                     $childValue,
@@ -98,19 +159,32 @@ class FlattenHelper
             }
         }
 
-        // =========================================
-        // 🔥 COLLECTION RELATION
-        // =========================================
-        if ($relValue instanceof \Illuminate\Support\Collection) {
+        // =========================
+        // COLLECTION
+        // =========================
+        if ($relValue instanceof Collection) {
 
             $row[$prefix] = $relValue->map(function ($item) {
-                return $item->getAttributes();
+                return $item instanceof Model
+                    ? array_merge($item->getAttributes(), $item->toArray())
+                    : (array) $item;
             })->toArray();
+        }
+
+        // =========================
+        // ARRAY FALLBACK
+        // =========================
+        if (is_array($relValue)) {
+            $row[$prefix] = $relValue;
         }
     }
 
-    private static function resolveKey($config, $relation, $key, $alias = [])
-    {
+    private static function resolveKey(
+        $config,
+        $relation,
+        $key,
+        $alias = []
+    ) {
         return $alias[$key]
             ?? $config['alias'][$relation][$key] ?? null
             ?? Str::snake($relation . '_' . $key);

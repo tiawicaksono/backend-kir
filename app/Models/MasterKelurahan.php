@@ -25,4 +25,9 @@ class MasterKelurahan extends Model
     {
         return $this->hasMany(MKendaraan::class, 'kelurahan_id', 'id');
     }
+
+    public function pendaftaranRekomendasis()
+    {
+        return $this->hasMany(TrnPendaftaranRekomendasi::class, 'kelurahan_id', 'id');
+    }
 }

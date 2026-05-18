@@ -30,4 +30,9 @@ class MasterKecamatan extends Model
     {
         return $this->hasMany(MKendaraan::class, 'kecamatan_id', 'id');
     }
+
+    public function pendaftaranRekomendasis()
+    {
+        return $this->hasMany(TrnPendaftaranRekomendasi::class, 'kecamatan_id', 'id');
+    }
 }

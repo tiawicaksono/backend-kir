@@ -24,4 +24,9 @@ class MasterProvinsi extends Model
     {
         return $this->hasMany(MKendaraan::class, 'provinsi_id', 'id');
     }
+
+    public function pendaftaranRekomendasis()
+    {
+        return $this->hasMany(TrnPendaftaranRekomendasi::class, 'provinsi_id', 'id');
+    }
 }
