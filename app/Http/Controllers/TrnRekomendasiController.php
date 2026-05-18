@@ -234,9 +234,10 @@ class TrnRekomendasiController extends Controller
     /**
      * UPDATE
      */
-    public function update(Request $request, TrnPendaftaranRekomendasi $rekomendasi)
-    {
-
+    public function update(
+        Request $request,
+        TrnPendaftaranRekomendasi $rekomendasi
+    ) {
         $validated = $request->validate([
 
             'no_surat_rekomendasi' =>
@@ -267,15 +268,58 @@ class TrnRekomendasiController extends Controller
             'nullable|integer',
         ]);
 
-        $rekomendasi->update(
-            $validated
+        // =========================
+        // UPDATE
+        // =========================
+        $rekomendasi->update($validated);
+
+        // =========================
+        // LOAD RELATION
+        // =========================
+        $rekomendasi->load([
+            'pendaftaran.kendaraan',
+            'area',
+        ]);
+
+        // =========================
+        // FLATTEN
+        // =========================
+        $data = [
+            ...$rekomendasi->toArray(),
+
+            // kendaraan
+            'pendaftaran_kendaraan_no_uji' =>
+            $rekomendasi->pendaftaran?->kendaraan?->no_uji,
+
+            'pendaftaran_kendaraan_no_kendaraan' =>
+            $rekomendasi->pendaftaran?->kendaraan?->no_kendaraan,
+
+            // area
+            'area_area_code' =>
+            $rekomendasi->area?->area_code,
+
+            'area_area_name' =>
+            $rekomendasi->area?->area_name,
+
+            // accessor
+            'jenis_rekomendasi' =>
+            $rekomendasi->jenis_rekomendasi,
+
+            'status_sinkron_label' =>
+            $rekomendasi->status_sinkron_label,
+        ];
+
+        // =========================
+        // HAPUS NESTED RELATION
+        // =========================
+        unset(
+            $data['pendaftaran'],
+            $data['area']
         );
 
         return response()->json([
             'success' => true,
-
-            'data' =>
-            $rekomendasi->fresh(),
+            'data' => $data,
         ]);
     }
 
