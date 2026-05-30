@@ -13,6 +13,19 @@ class QueryFilterService
         return strtolower(str_replace(' ', '', trim($value)));
     }
 
+    private static function isDateColumn($schema, $table, $column)
+    {
+        $type = Schema::getColumnType("$schema.$table", $column);
+
+        return in_array($type, [
+            'date',
+            'datetime',
+            'datetimetz',
+            'timestamp',
+            'timestamptz',
+        ]);
+    }
+
     public static function apply(Builder $query, $request, $model, $config = [])
     {
         // 🔥 ROOT TABLE
@@ -155,16 +168,33 @@ class QueryFilterService
 
             if (!in_array($key, $validColumns)) continue;
 
-            if (is_array($value)) {
-                $query->whereIn(
-                    DB::raw("REPLACE(LOWER($table.$key), ' ', '')"),
-                    array_map(fn($v) => self::normalize($v), $value)
-                );
+            $isDate = self::isDateColumn($schema, $table, $key);
+
+            if ($isDate) {
+
+                if (is_array($value)) {
+                    $query->whereIn(
+                        DB::raw("CAST($table.$key AS DATE)"),
+                        $value
+                    );
+                } else {
+                    $query->whereDate("$table.$key", $value);
+                }
             } else {
-                $query->whereRaw(
-                    "REPLACE(LOWER($table.$key), ' ', '') = ?",
-                    [self::normalize($value)]
-                );
+
+                if (is_array($value)) {
+
+                    $query->whereIn(
+                        DB::raw("REPLACE(LOWER(CAST($table.$key AS TEXT)), ' ', '')"),
+                        array_map(fn($v) => self::normalize($v), $value)
+                    );
+                } else {
+
+                    $query->whereRaw(
+                        "REPLACE(LOWER(CAST($table.$key AS TEXT)), ' ', '') = ?",
+                        [self::normalize($value)]
+                    );
+                }
             }
         }
 

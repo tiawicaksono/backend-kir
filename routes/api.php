@@ -26,6 +26,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MKendaraanController;
 use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\RollingAlatController;
+use App\Http\Controllers\TrnKartuUjiController;
 use App\Http\Controllers\TrnPembayaranController;
 use App\Http\Controllers\TrnPendaftaranController;
 use App\Http\Controllers\TrnRekomendasiController;
@@ -184,8 +185,11 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         Route::apiResource('/rekomendasi', TrnRekomendasiController::class);
         Route::post('/rekomendasi/{id}/sync', [TrnRekomendasiController::class, 'sync']);
         Route::post('/rekomendasi/sync-all', [TrnRekomendasiController::class, 'syncAll']);
-        Route::get('/rekomendasi/search-kendaraan',[TrnRekomendasiController::class, 'searchKendaraan']
-    );
+        Route::get('/rekomendasi/search-kendaraan', [TrnRekomendasiController::class, 'searchKendaraan']);
+
+        // CETAK KARTU UJI
+        Route::apiResource('/cetak-kartu', TrnKartuUjiController::class);
+        Route::post('/cetak-kartu/{id}/print', [TrnKartuUjiController::class, 'print']);
     });
 
     /**

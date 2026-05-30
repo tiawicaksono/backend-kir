@@ -379,10 +379,6 @@ class TrnPendaftaranController extends Controller
                     'label' => 'Status Penerbitan',
                 ],
                 [
-                    'field' => 'tanggal_uji',
-                    'label' => 'Tanggal Uji',
-                ],
-                [
                     'field' => 'petugas.name',
                     'label' => 'Petugas',
                 ]

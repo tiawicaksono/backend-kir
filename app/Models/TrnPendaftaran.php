@@ -89,6 +89,12 @@ class TrnPendaftaran extends Model
         return $this->hasOne(TrnPendaftaranRetribusi::class, 'pendaftaran_id');
     }
 
+    // 🔗 ke cetak kartu uji
+    public function kartuUji()
+    {
+        return $this->hasOne(TrnPendaftaranKartuUji::class, 'pendaftaran_id');
+    }
+
     // 🔗 ke user/petugas
     public function petugas()
     {

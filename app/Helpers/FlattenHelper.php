@@ -16,9 +16,9 @@ class FlattenHelper
             // ROOT DATA (SAFE MIX)
             // =========================
             $row = array_merge(
-                $item->getAttributes(),      // DB fields
-                $item->getRelations(),       // loaded relations
-                $item->toArray()             // accessor + appended
+                $item->getAttributes(),
+                $item->getRelations(),
+                $item->toArray()
             );
 
             // =========================
@@ -39,6 +39,11 @@ class FlattenHelper
             // PROCESS RELATIONS CONFIG
             // =========================
             foreach (($config['only'] ?? []) as $relation => $relConfig) {
+
+                // skip root field config
+                if (is_numeric($relation)) {
+                    continue;
+                }
 
                 $relValue = data_get($item, $relation);
 
@@ -75,11 +80,13 @@ class FlattenHelper
         $children = $relConfig['children'] ?? [];
 
         // =========================
-        // NULL RELATION (FORCE OUTPUT)
+        // NULL RELATION
         // =========================
         if (is_null($relValue)) {
 
+            // parent fields
             if ($only && $only !== '*') {
+
                 foreach ($only as $key) {
 
                     $resolvedKey = self::resolveKey(
@@ -87,6 +94,25 @@ class FlattenHelper
                         $prefix,
                         $key,
                         $alias
+                    );
+
+                    $row[$resolvedKey] = null;
+                }
+            }
+
+            // children fields
+            foreach ($children as $childRelation => $childConfig) {
+
+                $childOnly = $childConfig['only'] ?? [];
+                $childAlias = $childConfig['alias'] ?? [];
+
+                foreach ($childOnly as $childKey) {
+
+                    $resolvedKey = self::resolveKey(
+                        $globalConfig,
+                        $prefix . '_' . $childRelation,
+                        $childKey,
+                        $childAlias
                     );
 
                     $row[$resolvedKey] = null;
@@ -103,7 +129,7 @@ class FlattenHelper
 
             $attributes = array_merge(
                 $relValue->getAttributes(),
-                $relValue->toArray() // accessor support
+                $relValue->toArray()
             );
 
             if ($only && $only !== '*') {

@@ -15,12 +15,15 @@ class TrnRekomendasiController extends Controller
     public function index(Request $request)
     {
         $model = TrnPendaftaranRekomendasi::class;
-
+        $date = $request->tanggal_pendaftaran ?? today()->toDateString();
         $query = $model::query()
             ->with([
                 'pendaftaran.kendaraan:id,no_uji,no_kendaraan,nama_pemilik',
                 'area',
             ])
+            ->whereHas('pendaftaran', function ($q) use ($date) {
+                $q->whereDate('tanggal_pendaftaran', $date);
+            })
             ->select('trn_pendaftaran_rekomendasis.*');
 
         $config = $this->getTableConfig();
@@ -155,19 +158,15 @@ class TrnRekomendasiController extends Controller
             ],
 
             'searchable' => [
-
                 [
                     'field' =>
                     'pendaftaran.kendaraan.no_uji',
-
                     'label' =>
                     'No Uji',
                 ],
-
                 [
                     'field' =>
                     'pendaftaran.kendaraan.no_kendaraan',
-
                     'label' =>
                     'No Kendaraan',
                 ],
