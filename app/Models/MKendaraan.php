@@ -48,7 +48,9 @@ class MKendaraan extends Model
         'warna_bak',
         'bahan_utama_id',
         'jumlah_duduk',
-        'jumlah_berdiri'
+        'jumlah_berdiri',
+        'is_blokir',
+        'alasan_blokir',
     ];
 
     protected static function booted()

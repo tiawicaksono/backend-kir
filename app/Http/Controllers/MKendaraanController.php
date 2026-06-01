@@ -65,13 +65,14 @@ class MKendaraanController extends BaseApiController
     {
         return [
             'primary_key' => 'id',
-            'only_fields' => ['id', 'no_uji', 'no_kendaraan', 'nama_pemilik', 'no_rangka', 'no_mesin'],
+            'only_fields' => ['id', 'no_uji', 'no_kendaraan', 'nama_pemilik', 'no_rangka', 'no_mesin', 'is_blokir', 'alasan_blokir'],
             'labels' => [
                 'no_uji' => 'No Uji',
                 'no_kendaraan' => 'No Kendaraan',
                 'nama_pemilik' => 'Nama Pemilik',
                 'no_rangka' => 'No Rangka',
                 'no_mesin' => 'No Mesin',
+                'is_blokir' => 'Status',
             ],
             'searchable' => [
                 [
@@ -504,5 +505,54 @@ class MKendaraanController extends BaseApiController
         });
 
         return response()->json($data);
+    }
+
+    public function blokir(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|exists:m_kendaraans,id',
+            'reason' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Validation error', $validator->errors(), 422);
+        }
+
+        try {
+            $kendaraan = MKendaraan::findOrFail($request->id);
+            $kendaraan->update([
+                'is_blokir' => true,
+                'alasan_blokir' => $request->reason,
+            ]);
+
+            return $this->success(null, 'Kendaraan berhasil diblokir', 200);
+        } catch (\Exception $e) {
+            Log::error($e);
+            return $this->error('Gagal memblokir kendaraan', null, 500);
+        }
+    }
+
+    public function unblokir($id)
+    {
+        $validator = Validator::make(['id' => $id], [
+            'id' => 'required|exists:m_kendaraans,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Validation error', $validator->errors(), 422);
+        }
+
+        try {
+            $kendaraan = MKendaraan::findOrFail($id);
+            $kendaraan->update([
+                'is_blokir' => false,
+                'alasan_blokir' => null,
+            ]);
+
+            return $this->success(null, 'Kendaraan berhasil diunblokir', 200);
+        } catch (\Exception $e) {
+            Log::error($e);
+            return $this->error('Gagal mengunblokir kendaraan', null, 500);
+        }
     }
 }

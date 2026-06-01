@@ -199,6 +199,8 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         // KENDARAAN
         Route::get('/kendaraan/counts', [MKendaraanController::class, 'counts']);
         Route::get('/kendaraan/{id}/riwayat-uji', [MKendaraanController::class, 'riwayatUji']);
+        Route::post('/kendaraan/blokir', [MKendaraanController::class, 'blokir']);
+        Route::post('/kendaraan/{id}/unblokir', [MKendaraanController::class, 'unblokir']);
         Route::apiResource('kendaraan', MKendaraanController::class);
     });
     /**

@@ -72,6 +72,8 @@ return new class extends Migration
                 ->restrictOnDelete();
             $table->integer('jumlah_duduk')->default(0);
             $table->integer('jumlah_berdiri')->default(0);
+            $table->boolean('is_blokir')->default(false)->nullable();
+            $table->string('alasan_blokir')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
