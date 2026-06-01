@@ -190,11 +190,58 @@ class FlattenHelper
         // =========================
         if ($relValue instanceof Collection) {
 
+            // 🔥 NEW: support only untuk belongsToMany / hasMany
+            if ($only && $only !== '*') {
+
+                $row[$prefix] = $relValue->map(function ($item) use (
+                    $only,
+                    $except,
+                    $globalConfig
+                ) {
+
+                    $attributes = $item instanceof Model
+                        ? array_merge(
+                            $item->getAttributes(),
+                            $item->toArray()
+                        )
+                        : (array) $item;
+
+                    $filtered = [];
+
+                    foreach ($only as $field) {
+
+                        if (in_array($field, $except)) {
+                            continue;
+                        }
+
+                        if (in_array($field, $globalConfig['hidden'] ?? [])) {
+                            continue;
+                        }
+
+                        $filtered[$field] = data_get(
+                            $attributes,
+                            $field,
+                            null
+                        );
+                    }
+
+                    return $filtered;
+                })->toArray();
+
+                return;
+            }
+
+            // 🔥 EXISTING BEHAVIOUR (tetap sama)
             $row[$prefix] = $relValue->map(function ($item) {
                 return $item instanceof Model
-                    ? array_merge($item->getAttributes(), $item->toArray())
+                    ? array_merge(
+                        $item->getAttributes(),
+                        $item->toArray()
+                    )
                     : (array) $item;
             })->toArray();
+
+            return;
         }
 
         // =========================

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FlattenHelper;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\QueryFilterService;
@@ -25,37 +26,28 @@ class UserManagementController extends Controller
     {
         $model = User::class;
 
-        // load roles
         $query = $model::with('roles');
-
+        $query->whereHas('roles', function ($q) {
+            $q->where('is_active', true);
+        });
         $config = $this->getTableConfig();
+
+        // default sort
+        $primaryKey = $config['primary_key'] ?? null;
+
+        if (!$request->filled('sort_by') && $primaryKey) {
+            $request->merge([
+                'sort_by' => $primaryKey,
+                'sort_order' => 'desc',
+            ]);
+        }
 
         QueryFilterService::apply($query, $request, $model, $config);
 
         $perPage = $request->limit ?? 10;
         $result = $query->paginate($perPage);
 
-        // 🔥 transform data biar clean
-        $data = collect($result->items())->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'email' => $item->email,
-                'email_verified_at' => $item->email_verified_at,
-                'created_at' => $item->created_at,
-                'updated_at' => $item->updated_at,
-                'phone' => $item->phone,
-
-                // roles clean (tanpa pivot, tanpa field lain)
-                'roles' => $item->roles->map(function ($role) {
-                    return [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                        'is_active' => $role->pivot->is_active
-                    ];
-                })->values(),
-            ];
-        });
+        $data = FlattenHelper::flatten($result->items(), $config);
 
         return response()->json([
             'data' => $data,
@@ -68,23 +60,62 @@ class UserManagementController extends Controller
         ]);
     }
 
-    public function getTableConfig()
+    private function getTableConfig()
     {
         return [
             'primary_key' => 'id',
-            'labels' => [],
+
+            'only_fields' => [
+                'id',
+                'name',
+                'email',
+                'phone',
+            ],
+
+            'only' => [
+                'roles' => [
+                    'only' => [
+                        'id',
+                        'name',
+                    ],
+                ],
+            ],
+
+            'labels' => [
+                'name' => 'Nama',
+                'email' => 'Email',
+                'phone' => 'No. HP',
+                'roles.name' => 'Role',
+            ],
+
             'searchable' => [
                 [
                     'field' => 'name',
-                    'label' => 'Name'
+                    'label' => 'Nama',
                 ],
                 [
                     'field' => 'email',
-                    'label' => 'Email'
-                ]
+                    'label' => 'Email',
+                ],
+                [
+                    'field' => 'phone',
+                    'label' => 'No. HP',
+                ],
             ],
-            'sortable' => ['name', 'email'],
-            'hidden' => ['id', 'email_verified_at', 'remember_token', 'password', 'created_at', 'updated_at'],
+
+            'sortable' => [
+                'name',
+                'email',
+                'phone',
+            ],
+
+            'hidden' => [
+                'password',
+                'remember_token',
+                'email_verified_at',
+                'created_at',
+                'updated_at',
+            ],
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FlattenHelper;
 use App\Models\Role;
 use App\Services\QueryFilterService;
 use Illuminate\Http\Request;
@@ -15,21 +16,27 @@ class RoleManagementController extends Controller
     public function index(Request $request)
     {
         $model = Role::class;
+
         $query = $model::query();
+
         $config = $this->getTableConfig();
+
+        // default sort
+        $primaryKey = $config['primary_key'] ?? null;
+
+        if (!$request->filled('sort_by') && $primaryKey) {
+            $request->merge([
+                'sort_by' => $primaryKey,
+                'sort_order' => 'desc',
+            ]);
+        }
 
         QueryFilterService::apply($query, $request, $model, $config);
 
         $perPage = $request->limit ?? 10;
         $result = $query->paginate($perPage);
 
-        // 🔥 transform data biar clean
-        $data = collect($result->items())->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-            ];
-        });
+        $data = FlattenHelper::flatten($result->items(), $config);
 
         return response()->json([
             'data' => $data,
@@ -42,17 +49,35 @@ class RoleManagementController extends Controller
         ]);
     }
 
-    public function getTableConfig()
+    private function getTableConfig()
     {
         return [
             'primary_key' => 'id',
-            'labels' => [],
-            'searchable' => [[
-                'field' => 'name',
-                'label' => 'Name'
-            ]],
-            'sortable' => ['name'],
-            'hidden' => ['id', 'created_at', 'updated_at'],
+
+            'only_fields' => [
+                'id',
+                'name',
+            ],
+
+            'labels' => [
+                'name' => 'Name',
+            ],
+
+            'searchable' => [
+                [
+                    'field' => 'name',
+                    'label' => 'Name',
+                ],
+            ],
+
+            'sortable' => [
+                'name',
+            ],
+
+            'hidden' => [
+                'created_at',
+                'updated_at',
+            ],
         ];
     }
 
