@@ -14,12 +14,6 @@ use Illuminate\Validation\Rule;
 
 class MKendaraanController extends BaseApiController
 {
-    public function counts()
-    {
-        return response()->json([
-            'countData' => MKendaraan::count(),
-        ]);
-    }
     /**
      * Display a listing of the resource.
      */

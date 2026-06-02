@@ -203,6 +203,17 @@ class TrnPembayaranController extends Controller
         ];
     }
 
+    public function destroy($id)
+    {
+        $pendaftaran = TrnPendaftaran::findOrFail($id);
+        $pendaftaran->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pendaftaran deleted successfully',
+        ]);
+    }
+
     /**
      * Toggle bayar
      */
