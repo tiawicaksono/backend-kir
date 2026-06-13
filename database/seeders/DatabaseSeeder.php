@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             // MCisSubCategoriesSeeder::class, // 16️⃣ m_cis_sub_categories
             // MCisQuestionsSeeder::class, // 17️⃣ m_cis_questions (butuh m_cis_categories + m_cis_sub_categories)
             // MCisQuestionOptionsSeeder::class, // 18️⃣ m_cis_question_options (butuh m_cis_questions)
+            // KuotaSeeder::class,
         ]);
     }
 }

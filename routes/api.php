@@ -5,6 +5,7 @@ use App\Http\Controllers\ApiIntegrationController;
 use App\Http\Controllers\ApiTokenController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\KuotaController;
 use App\Http\Controllers\MasterAreaController;
 use App\Http\Controllers\MasterBahanBakarController;
 use App\Http\Controllers\MasterBahanUtamaController;
@@ -285,6 +286,11 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
             // KONFIGURASI SUMBU
             Route::get('/konfigurasiumbu/counts', [MasterKonfigurasiSumbuController::class, 'counts']);
             Route::apiResource('konfigurasiumbu', MasterKonfigurasiSumbuController::class);
+
+            // KUOTA
+            Route::get('/kuota', [KuotaController::class, 'index']);
+            Route::post('/kuota', [KuotaController::class, 'store']);
+            Route::put('/kuota/{id}', [KuotaController::class, 'update']);
         });
     /**
      * ===============================
