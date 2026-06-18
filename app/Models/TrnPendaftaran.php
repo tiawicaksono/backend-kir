@@ -95,6 +95,12 @@ class TrnPendaftaran extends Model
         return $this->hasOne(TrnPendaftaranKartuUji::class, 'pendaftaran_id');
     }
 
+    // 🔗 ke hasil uji
+    public function hasilUji()
+    {
+        return $this->hasOne(TrnHasilUji::class, 'pendaftaran_id');
+    }
+
     // 🔗 ke user/petugas
     public function petugas()
     {

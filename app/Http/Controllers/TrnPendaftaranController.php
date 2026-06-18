@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FlattenHelper;
+use App\Models\MKuota;
 use App\Models\TrnPendaftaran;
 use App\Services\KemenhubService;
 use App\Services\PendaftaranService;
@@ -121,39 +122,49 @@ class TrnPendaftaranController extends Controller
     public function store(Request $request)
     {
         try {
-            $pendaftaran = $this->pendaftaranService
-                ->storePendaftaran(
+
+            $pendaftaran = DB::transaction(function () use ($request) {
+
+                $tanggalUji = $request->tanggal_uji;
+
+                // Lock per tanggal uji
+                DB::select(
+                    "SELECT pg_advisory_xact_lock(hashtext(?))",
+                    [$tanggalUji]
+                );
+
+                $kuota = MKuota::value('kuota');
+
+                if (!$kuota) {
+                    throw new \Exception('Kuota tanggal uji belum diatur');
+                }
+
+                $totalPendaftar = TrnPendaftaran::whereDate('tanggal_uji', $tanggalUji)
+                    ->whereIn('status_penerbitan_id', [1, 2, 7, 8, 9])
+                    ->count();
+
+                if ($totalPendaftar >= $kuota) {
+                    throw new \Exception('Kuota tanggal uji sudah penuh');
+                }
+
+                return $this->pendaftaranService->storePendaftaran(
                     $request->all(),
                     $request->user()
                 );
+            });
 
             $data = [
-
                 'id' => $pendaftaran->id,
-
-                'no_pendaftaran_harian' =>
-                $pendaftaran->no_pendaftaran_harian,
-
-                'tanggal_uji' =>
-                $pendaftaran->tanggal_uji,
-
-                'kendaraan_no_uji' =>
-                $pendaftaran->kendaraan?->no_uji,
-
-                'kendaraan_no_kendaraan' =>
-                $pendaftaran->kendaraan?->no_kendaraan,
-
-                'kendaraan_nama_pemilik' =>
-                $pendaftaran->kendaraan?->nama_pemilik,
-
-                'status_penerbitan_issuance_id' =>
-                $pendaftaran->statusPenerbitan?->issuance_id,
-                'status_penerbitan_issuance_name' =>
-                $pendaftaran->statusPenerbitan?->issuance_name,
-
-                'petugas_name' =>
-                $pendaftaran->petugas?->name,
+                'no_pendaftaran_harian' => $pendaftaran->no_pendaftaran_harian,
+                'tanggal_uji' => $pendaftaran->tanggal_uji,
+                'kendaraan_no_uji' => $pendaftaran->kendaraan?->no_uji,
+                'kendaraan_no_kendaraan' => $pendaftaran->kendaraan?->no_kendaraan,
+                'kendaraan_nama_pemilik' => $pendaftaran->kendaraan?->nama_pemilik,
+                'status_penerbitan_issuance_id' => $pendaftaran->statusPenerbitan?->issuance_id,
+                'status_penerbitan_issuance_name' => $pendaftaran->statusPenerbitan?->issuance_name,
+                'petugas_name' => $pendaftaran->petugas?->name,
             ];
+
             return response()->json([
                 'success' => true,
                 'message' => 'Berhasil simpan',
@@ -164,7 +175,7 @@ class TrnPendaftaranController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-            ], 500);
+            ], 422);
         }
     }
 

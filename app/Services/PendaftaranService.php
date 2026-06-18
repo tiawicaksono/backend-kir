@@ -35,7 +35,7 @@ class PendaftaranService
                 fn($q) =>
                 $q->where('status_penerbitan_id', $issuanceId)
             )
-            ->whereDate('created_at', today())
+            ->whereDate('tanggal_uji', today())
             ->exists();
     }
 

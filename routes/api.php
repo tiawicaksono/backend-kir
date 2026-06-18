@@ -27,6 +27,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MKendaraanController;
 use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\RollingAlatController;
+use App\Http\Controllers\TrnAntrianUjiController;
 use App\Http\Controllers\TrnKartuUjiController;
 use App\Http\Controllers\TrnPembayaranController;
 use App\Http\Controllers\TrnPendaftaranController;
@@ -191,6 +192,16 @@ Route::middleware(['auth:sanctum', 'check.menu'])->group(function () {
         // CETAK KARTU UJI
         Route::apiResource('/cetak-kartu', TrnKartuUjiController::class);
         Route::post('/cetak-kartu/{id}/print', [TrnKartuUjiController::class, 'print']);
+    });
+
+    // Monitoring
+    Route::prefix('monitoring')->group(function () {
+        // ANTRIAN UJI
+        Route::apiResource('/antrian-uji', TrnAntrianUjiController::class);
+        Route::patch('/antrian-uji/{id}/toggle-datang', [TrnAntrianUjiController::class, 'toggleDatang']);
+
+        // RIWAYAT PENDAFTARAN
+        Route::apiResource('/riwayat-pendaftaran', TrnPembayaranController::class);
     });
 
     /**
